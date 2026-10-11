@@ -1,22 +1,27 @@
 package com.drivingSchool;
 
-import com.drivingSchool.API.consoleAPI;
+import com.drivingSchool.API.ConsoleAPI;
+import java.util.Scanner;
+
 
 class Main {
+    private static String introduction = "Здравствуйте! Я — консольный бот автошколы.\n" +
+			                             "Я помогу вам записаться на курс, узнать расписание и посмотреть статистику.\n" +
+			                             "Введите `/start`, чтобы начать работать со мной.";
+
     public static void main(String[] args) {
     	System.out.println(introduction);
-    	System.out.println("Для начала функционирования бота введите команду `/start`\n");
+    	Scanner scanner = new Scanner(System.in);
+		String request;
 
-		boolean isRunning = true;
-		while (isRunning) {
+		do {
 			System.out.print("> ");
-			String request = scanner.nextLine().stripTrailing();
+			request = scanner.nextLine().trim();
+		} while (!request.equals("/start"));
 
-			if (botActionTable.containsKey(request)) {
-				isRunning = botActionTable.get(request).execute();
-			} else {
-				System.out.println("Бот не знает команду " + request);
-			}
+		
+		if (!ConsoleAPI.start(scanner)) {
+			System.out.println("!!! БОТ АВАРИЙНО ЗАВЕРШИЛ РАБОТУ !!!");
 		}
 	}
 }

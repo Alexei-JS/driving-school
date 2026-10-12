@@ -19,7 +19,6 @@ public class ConsoleAPI
 		do {
 			System.out.print("> ");
 			String request = scanner.nextLine().trim();
-            System.out.print(request);
             
             currentCommand = botCommandHandler.handler(request);
             isRunning = currentCommand.getAsBoolean();

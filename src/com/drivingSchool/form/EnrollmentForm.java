@@ -1,8 +1,8 @@
 package com.drivingSchool.form;
 
-import java.util.List;
 import java.util.Scanner;
 import com.drivingSchool.model.Student;
+import com.drivingSchool.storage.StudentRepository;
 
 /**
  * Анкета курсанта. Опрашивает пользователя, валидирует ввод,
@@ -10,7 +10,7 @@ import com.drivingSchool.model.Student;
  */
 public class EnrollmentForm {
 
-    public static boolean run(Scanner scanner, List<Student> students) {
+    public static boolean run(Scanner scanner, StudentRepository repository) {
         System.out.println("--- Запись на курс ---");
 
         String fullName = askFullName(scanner);
@@ -19,7 +19,7 @@ public class EnrollmentForm {
         boolean hasMedicalCert = askMedicalCert(scanner);
 
         Student student = new Student(fullName, age, category, hasMedicalCert);
-        students.add(student);
+        repository.add(student);
 
         System.out.println("Курсант успешно записан:");
         System.out.println(student);

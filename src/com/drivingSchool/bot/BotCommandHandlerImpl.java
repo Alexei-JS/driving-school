@@ -1,22 +1,27 @@
 package com.drivingSchool.bot;
 
 import java.util.Map;
+import java.util.Scanner;
 import java.util.function.BooleanSupplier;
+
+import com.drivingSchool.form.EnrollmentForm;
 import com.drivingSchool.storage.StudentRepository;
 
 
 public class BotCommandHandlerImpl implements BotCommandHandler {
 	private final StudentRepository repository;
+	private final Scanner scanner;
 
-    public BotCommandHandlerImpl(StudentRepository repository) {
+    public BotCommandHandlerImpl(StudentRepository repository, Scanner scanner) {
         this.repository = repository;
+		this.scanner = scanner;
     }
 	
 	public final Map<String, BooleanSupplier> commands = Map.<String, BooleanSupplier>of(
 			"/exit", this::getExit,
 			"/aboutMe", this::getAboutMe,
 			"/help", this::getHelp,
-			"/shedule", this::getSchedule,
+			"/schedule", this::getSchedule,
 			"/completeForm", this::getCompleteForm
 	);
 	
@@ -27,38 +32,46 @@ public class BotCommandHandlerImpl implements BotCommandHandler {
 	
 	@Override
 	public boolean getExit() {
-	    //
+		System.out.println("Бот завершил свою работу. До скорых встреч!");
 		return false;
 	}
 	
 	@Override
 	public boolean getHelp() {
-		//System.out.println("Доступные команды:\n" + "/help      — показать список команд\n" + "/start     — приветствие и краткая информация о боте\n" + 
-		//		"/enroll    — записаться на курс (анкета курсанта)\n" + "/stats     — статистика по записанным курсантам\n" + "/schedule  — расписание занятий\n" + 
-		//		"/deleteBot — завершить работу бота\n");
-        return true;
+		System.out.println("Доступные команды:\n" +
+			"/help          — показать список команд\n" +
+			"/aboutMe       — информация о боте\n" +
+			"/completeForm  — записаться на курс (анкета курсанта)\n" +
+			"/schedule      — расписание занятий\n" +
+			"/exit          — завершить работу бота");
+		return true;
 	}
 	
 	@Override
 	public boolean getCompleteForm() {
-		//
-        return true;
+		return EnrollmentForm.run(scanner, repository);
 	}
 
 	@Override
 	public boolean getAboutMe() {
-        //
-        return true;
+		System.out.println("Здравствуйте! Я — консольный бот автошколы.\n" +
+			"Я помогу вам записаться на курс, узнать расписание и посмотреть статистику.\n" +
+			"Введите /help, чтобы увидеть список доступных команд.");
+		return true;
 	}
 
 	@Override
 	public boolean getSchedule() {
-        //
-        return true;
+		System.out.println("Расписание занятий:\n" +
+			"Теория:    понедельник, среда, пятница — 18:00–20:00\n" +
+			"Практика:  вторник, четверг — по записи с инструктором\n" +
+			"Экзамен:   суббота — 10:00 (по готовности группы)");
+		return true;
 	}
 	
 	@Override
 	public boolean getPassCommand() {
-		return true; // Функция заглушка, когда введена неверная команда
+		System.out.println("Неизвестная команда. Введите /help, чтобы увидеть список доступных команд.");
+		return true;
 	}
 }

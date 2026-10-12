@@ -8,10 +8,11 @@ import com.drivingSchool.storage.StudentRepository;
 public class ConsoleAPI
 {
     private static final StudentRepository repository = new InMemoryStudentRepository();
-    public static final BotCommandHandler botCommandHandler = new BotCommandHandlerImpl(repository);
 
     public static boolean start(Scanner scanner) {
         System.out.println("Бот успешно запущен!");
+        BotCommandHandler botCommandHandler = new BotCommandHandlerImpl(repository, scanner);
+
         BooleanSupplier currentCommand;
         boolean isRunning = true;
 

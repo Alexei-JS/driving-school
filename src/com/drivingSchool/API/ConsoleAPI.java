@@ -1,26 +1,31 @@
 package com.drivingSchool.API;
 
 import java.util.Scanner;
-import java.util.Map;
-import java.util.List;
-import java.util.ArrayList;
+import java.util.function.BooleanSupplier;
 
-import com.drivingSchool.UsersInfo.EnrollmentForm;
-import com.drivingSchool.UsersInfo.Student;
+import com.drivingSchool.UsersInfo.BotCommandHandler;
+import com.drivingSchool.UsersInfo.BotCommandHandlerImpl;
 
 
 public class ConsoleAPI
 {
+	public static final BotCommandHandler botCommandHandler = new BotCommandHandlerImpl();
+	
 	public static boolean start(Scanner scanner) {
 		System.out.println("Бот успешно запущен!");
+	    BooleanSupplier currentCommand;
 		boolean isRunning = true;
 		
-		while (isRunning) {
+		do {
 			System.out.print("> ");
 			String request = scanner.nextLine().trim();
             System.out.print(request);
-			/* Тут проверка команд на существование и исполнение в предсказуемом варианте */
-		}
+            
+            currentCommand = botCommandHandler.handler(request);
+            isRunning = currentCommand.getAsBoolean();
+		} while (isRunning);
+		
+		scanner.close();
 		return true;
 	}
 }

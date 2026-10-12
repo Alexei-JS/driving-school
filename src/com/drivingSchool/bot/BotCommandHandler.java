@@ -7,7 +7,7 @@ public interface BotCommandHandler {
 	
 	boolean getExit();
 	boolean getHelp();
-	boolean getCompleteForm();
+	boolean getEnroll();
     boolean getAboutMe();
     boolean getSchedule();
     boolean getPassCommand(); // Функция заглушка, когда введена неверная команда

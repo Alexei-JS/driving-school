@@ -5,6 +5,7 @@ import java.util.Scanner;
 import java.util.function.BooleanSupplier;
 
 import com.drivingSchool.form.EnrollmentForm;
+import com.drivingSchool.model.Student;
 import com.drivingSchool.storage.StudentRepository;
 
 
@@ -22,7 +23,8 @@ public class BotCommandHandlerImpl implements BotCommandHandler {
 			"/aboutMe", this::getAboutMe,
 			"/help", this::getHelp,
 			"/schedule", this::getSchedule,
-			"/completeForm", this::getCompleteForm
+			"/completeForm", this::getCompleteForm,
+			"/stats", this::getStats
 	);
 	
 	@Override
@@ -43,6 +45,7 @@ public class BotCommandHandlerImpl implements BotCommandHandler {
 			"/aboutMe       — информация о боте\n" +
 			"/completeForm  — записаться на курс (анкета курсанта)\n" +
 			"/schedule      — расписание занятий\n" +
+			"/stats         — получить статистику\n" +
 			"/exit          — завершить работу бота");
 		return true;
 	}
@@ -72,6 +75,34 @@ public class BotCommandHandlerImpl implements BotCommandHandler {
 	@Override
 	public boolean getPassCommand() {
 		System.out.println("Неизвестная команда. Введите /help, чтобы увидеть список доступных команд.");
+		return true;
+	}
+
+	@Override
+	public boolean getStats() {
+		if (repository.isEmpty()) {
+			System.out.println("Пока никто не записан. Воспользуйтесь /completeForm, чтобы записаться на курс.");
+			return true;
+		}
+
+		int total = repository.count();
+		int sumAge = 0;
+		int withCert = 0;
+
+		for (Student student : repository.getAll()) {
+			sumAge += student.getAge();
+			if (student.hasMedicalCert()) {
+				withCert++;
+			}
+		}
+
+		double averageAge = (double) sumAge / total;
+
+		System.out.println("Статистика по курсантам:");
+		System.out.printf("Всего записано: %d%n", total);
+		System.out.printf("Средний возраст: %.1f лет%n", averageAge);
+		System.out.printf("Со справкой от медкомиссии: %d из %d%n", withCert, total);
+
 		return true;
 	}
 }

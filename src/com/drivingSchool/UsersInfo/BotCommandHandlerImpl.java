@@ -11,7 +11,7 @@ public class BotCommandHandlerImpl implements BotCommandHandler {
 			"/aboutMe", this::getAboutMe,
 			"/help", this::getHelp,
 			"/shedule", this::getSchedule,
-			"/completeForm", this::getCompleteForm
+			"/completeForm", this::getEnroll
 	);
 	
 	@Override
@@ -27,14 +27,19 @@ public class BotCommandHandlerImpl implements BotCommandHandler {
 	
 	@Override
 	public boolean getHelp() {
-		//System.out.println("Доступные команды:\n" + "/help      — показать список команд\n" + "/start     — приветствие и краткая информация о боте\n" + 
-		//		"/enroll    — записаться на курс (анкета курсанта)\n" + "/stats     — статистика по записанным курсантам\n" + "/schedule  — расписание занятий\n" + 
-		//		"/deleteBot — завершить работу бота\n");
+		System.out.println(
+			"Доступные команды:\n" +
+		    "/help      — показать список команд\n" +
+		    "/start     — приветствие и краткая информация о боте\n" + 
+		    "/enroll    — записаться на курс (анкета курсанта)\n" +
+		    "/aboutMe     — статистика по записанным курсантам\n" +
+		    "/schedule  — расписание занятий\n" + 
+			"/exit — завершить работу боsта\n");
         return true;
 	}
 	
 	@Override
-	public boolean getCompleteForm() {
+	public boolean getEnroll() {
 		//
         return true;
 	}

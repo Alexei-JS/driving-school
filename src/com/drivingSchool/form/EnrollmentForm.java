@@ -1,4 +1,4 @@
-package com.drivingSchool.Information;
+package com.drivingSchool.form;
 
 import java.util.List;
 import java.util.Scanner;

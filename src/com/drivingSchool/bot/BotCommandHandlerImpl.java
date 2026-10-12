@@ -1,11 +1,17 @@
-package com.drivingSchool.UsersInfo;
+package com.drivingSchool.bot;
 
 import java.util.Map;
-
 import java.util.function.BooleanSupplier;
+import com.drivingSchool.storage.StudentRepository;
 
 
 public class BotCommandHandlerImpl implements BotCommandHandler {
+	private final StudentRepository repository;
+
+    public BotCommandHandlerImpl(StudentRepository repository) {
+        this.repository = repository;
+    }
+	
 	public final Map<String, BooleanSupplier> commands = Map.<String, BooleanSupplier>of(
 			"/exit", this::getExit,
 			"/aboutMe", this::getAboutMe,

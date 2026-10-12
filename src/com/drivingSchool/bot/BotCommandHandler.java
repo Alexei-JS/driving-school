@@ -1,4 +1,4 @@
-package com.drivingSchool.UsersInfo;
+package com.drivingSchool.bot;
 
 import java.util.function.BooleanSupplier;
 

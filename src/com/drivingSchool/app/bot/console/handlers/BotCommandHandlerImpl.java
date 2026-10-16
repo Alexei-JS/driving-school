@@ -32,6 +32,23 @@ public class BotCommandHandlerImpl implements BotCommandHandler {
 	    return commands.getOrDefault(commandName, this::getPassCommand);
 	}
 	
+	
+	@Override
+	public boolean getStart() {
+		System.out.println("Бот успешно запущен!");
+		BooleanSupplier currentCommand;
+        boolean isRunning = true;
+
+        do {
+            System.out.print("> ");
+            String request = scanner.nextLine().trim();
+
+            currentCommand = this.handler(request);
+            isRunning = currentCommand.getAsBoolean();
+        } while (isRunning);
+	    return true;
+	}
+	
 	@Override
 	public boolean getExit() {
 		System.out.println("Бот завершил свою работу. До скорых встреч!");

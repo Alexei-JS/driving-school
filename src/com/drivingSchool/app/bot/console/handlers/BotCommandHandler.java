@@ -5,6 +5,7 @@ import java.util.function.BooleanSupplier;
 public interface BotCommandHandler {
 	BooleanSupplier handler(String commandName); // Основная функция отвечающая за получение методов из класса
 	
+	boolean getStart();
 	boolean getExit();
 	boolean getHelp();
 	boolean getCompleteForm();

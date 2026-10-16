@@ -1,12 +1,12 @@
-package com.drivingSchool.bot;
+package com.drivingSchool.app.bot.console.handlers;
 
 import java.util.Map;
 import java.util.Scanner;
 import java.util.function.BooleanSupplier;
 
-import com.drivingSchool.form.EnrollmentForm;
-import com.drivingSchool.model.Student;
-import com.drivingSchool.storage.StudentRepository;
+import com.drivingSchool.app.forms.EnrollmentForm;
+import com.drivingSchool.app.models.Student;
+import com.drivingSchool.app.storage.StudentRepository;
 
 
 public class BotCommandHandlerImpl implements BotCommandHandler {

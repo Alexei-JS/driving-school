@@ -1,8 +1,9 @@
-package com.drivingSchool.form;
+package com.drivingSchool.app.forms;
 
 import java.util.Scanner;
-import com.drivingSchool.model.Student;
-import com.drivingSchool.storage.StudentRepository;
+
+import com.drivingSchool.app.models.Student;
+import com.drivingSchool.app.storage.StudentRepository;
 
 /**
  * Анкета курсанта. Опрашивает пользователя, валидирует ввод,

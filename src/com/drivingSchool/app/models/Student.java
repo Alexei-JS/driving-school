@@ -1,4 +1,4 @@
-package com.drivingSchool.model;
+package com.drivingSchool.app.models;
 
 public class Student {
 

@@ -1,9 +1,12 @@
-package com.drivingSchool.bot;
+package com.drivingSchool.app.bot.console;
 
 import java.util.Scanner;
 import java.util.function.BooleanSupplier;
-import com.drivingSchool.storage.InMemoryStudentRepository;
-import com.drivingSchool.storage.StudentRepository;
+
+import com.drivingSchool.app.storage.InMemoryStudentRepository;
+import com.drivingSchool.app.storage.StudentRepository;
+import com.drivingSchool.app.bot.console.handlers.BotCommandHandlerImpl;
+import com.drivingSchool.app.bot.console.handlers.BotCommandHandler;
 
 public class ConsoleAPI
 {

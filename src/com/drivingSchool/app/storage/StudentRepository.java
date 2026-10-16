@@ -1,6 +1,6 @@
-package com.drivingSchool.storage;
+package com.drivingSchool.app.storage;
 
-import com.drivingSchool.model.Student;
+import com.drivingSchool.app.models.Student;
 import java.util.List;
 
 public interface StudentRepository {

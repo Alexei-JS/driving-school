@@ -1,8 +1,8 @@
-package com.drivingSchool.app;
+package com.drivingSchool.app.core;
 
 import java.util.Scanner;
 
-import com.drivingSchool.bot.ConsoleAPI;
+import com.drivingSchool.app.bot.console;
 
 
 class Main {

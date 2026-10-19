@@ -1,4 +1,4 @@
-package com.drivingSchool.app.core;
+package com.drivingSchool.app.core.confings;
 
 /**
  * Создаем класс {@link Config}, который будет реализовывать логику dataclass (Аналог из python)

@@ -1,4 +1,6 @@
-package com.drivingSchool.app.core;
+package com.drivingSchool.app.core.confings.loaders;
+
+import com.drivingSchool.app.core.confings.Config;
 
 import java.util.Properties;
 import java.io.FileInputStream;

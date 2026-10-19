@@ -22,6 +22,7 @@ class Main
     	    }
     	    default -> {
     	    	// Логика NoOperations
+				throw new RuntimeException("Такой тип интерфейса не поддерживается! (Укажите другой config)");
     	    }
     	}
     	System.out.print("Бот отработал в штатном режиме.");

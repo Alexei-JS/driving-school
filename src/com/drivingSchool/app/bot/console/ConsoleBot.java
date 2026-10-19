@@ -4,7 +4,7 @@ import java.util.Scanner;
 
 import com.drivingSchool.app.storage.InMemoryStudentRepository;
 import com.drivingSchool.app.storage.StudentRepository;
-import com.drivingSchool.app.bot.console.handlers.BotCommandHandlerImpl;
+import com.drivingSchool.app.bot.console.handlers.ConsoleBotCommandHandler;
 import com.drivingSchool.app.bot.console.handlers.BotCommandHandler;
 
 public class ConsoleBot
@@ -26,7 +26,7 @@ public class ConsoleBot
 			request = scanner.nextLine().trim();
 		} while (!request.equals("/start"));
     	
-        BotCommandHandler botCommandHandler = new BotCommandHandlerImpl(repository, scanner);
+        BotCommandHandler botCommandHandler = new ConsoleBotCommandHandler(repository, scanner);
         botCommandHandler.getStart();
 
         scanner.close();

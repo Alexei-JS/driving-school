@@ -9,11 +9,11 @@ import com.drivingSchool.app.models.Student;
 import com.drivingSchool.app.storage.StudentRepository;
 
 
-public class BotCommandHandlerImpl implements BotCommandHandler {
+public class ConsoleBotCommandHandler implements BotCommandHandler {
 	private final StudentRepository repository;
 	private final Scanner scanner;
 
-    public BotCommandHandlerImpl(StudentRepository repository, Scanner scanner) {
+    public ConsoleBotCommandHandler(StudentRepository repository, Scanner scanner) {
         this.repository = repository;
 		this.scanner = scanner;
     }

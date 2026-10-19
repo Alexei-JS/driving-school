@@ -1,18 +1,20 @@
 package com.drivingSchool.app;
 
-import com.drivingSchool.app.core.ConfigLoader;
-import com.drivingSchool.app.bot.console.ConsoleAPI;
+import com.drivingSchool.app.core.PropertyConfigLoader;
+import com.drivingSchool.app.bot.console.ConsoleBot;
+import com.drivingSchool.app.core.Config;
 
 
 class Main
 {
-    public static void main(String[] args) {
-    	ConfigLoader config = new ConfigLoader("src/com/drivingSchool/config.properties");
+    static void main(String[] args) {
+    	PropertyConfigLoader config = new PropertyConfigLoader("src/com/drivingSchool/config.properties");
+		Config currentConfig = config.getConfig();
     	
-    	switch (config.getAPI())
+    	switch (currentConfig.api())
     	{
     	    case "console" -> {
-    	    	if (!ConsoleAPI.run())
+    	    	if (!ConsoleBot.run())
     	    	    System.out.println("!!! БОТ АВАРИЙНО ЗАВЕРШИЛ РАБОТУ !!!");
     	    }
     	    case "telegram" -> {
@@ -22,6 +24,6 @@ class Main
     	    	// Логика NoOperations
     	    }
     	}
-    	System.out.println("Бот отработал в штатном режиме.");
+    	System.out.print("Бот отработал в штатном режиме.");
     }
 }

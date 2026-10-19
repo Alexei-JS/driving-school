@@ -1,14 +1,13 @@
 package com.drivingSchool.app.bot.console;
 
 import java.util.Scanner;
-import java.util.function.BooleanSupplier;
 
 import com.drivingSchool.app.storage.InMemoryStudentRepository;
 import com.drivingSchool.app.storage.StudentRepository;
 import com.drivingSchool.app.bot.console.handlers.BotCommandHandlerImpl;
 import com.drivingSchool.app.bot.console.handlers.BotCommandHandler;
 
-public class ConsoleAPI
+public class ConsoleBot
 {
     private static String introduction = "Здравствуйте! Я — консольный бот автошколы.\n" +
             "Я помогу вам записаться на курс, узнать расписание и посмотреть статистику.\n" +

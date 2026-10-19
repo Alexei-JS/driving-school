@@ -5,18 +5,16 @@ import java.io.FileInputStream;
 import java.io.IOException;
 
 
-public class ConfigLoader {
-	private String api;
-	private String saveMode;
+public class PropertyConfigLoader {
+    private Config config;
 
-	public ConfigLoader(String pathConfigFile) {
+	public PropertyConfigLoader(String pathConfigFile) {
 		Properties settings = new Properties();
 		
 		try (FileInputStream fileStream = new FileInputStream(pathConfigFile)) {
 			settings.load(fileStream);
-			
-			this.api = settings.getProperty("api");
-			this.saveMode = settings.getProperty("saveMode");
+
+			this.config = new Config(settings.getProperty("api"), settings.getProperty("saveMode"));
 		}
 		catch (IOException error) {
 			// Если произошла ошибка при открытии файла
@@ -27,11 +25,5 @@ public class ConfigLoader {
 		}
 	}
 	
-	public String getAPI() {
-		return this.api;
-	}
-	
-	public String getSaveMode() {
-		return this.saveMode;
-	}
+	public Config getConfig() { return this.config; }
 }

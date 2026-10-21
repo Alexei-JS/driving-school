@@ -1,4 +1,4 @@
-package com.drivingSchool.UsersInfo;
+package com.drivingSchool.bot;
 
 import java.util.function.BooleanSupplier;
 
@@ -10,5 +10,6 @@ public interface BotCommandHandler {
 	boolean getCompleteForm();
     boolean getAboutMe();
     boolean getSchedule();
+	boolean getStats();
     boolean getPassCommand(); // Функция заглушка, когда введена неверная команда
 }

@@ -5,9 +5,9 @@ import com.drivingSchool.app.core.confings.Config;
 import com.drivingSchool.app.core.ConfigsManager;
 
 
-class Main
+public class Main
 {
-    static void main(String[] args) {
+    public static void main(String[] args) {
     	PropertyConfigLoader config = new PropertyConfigLoader("src/com/drivingSchool/config.properties");
     	ConfigsManager configsManager = new ConfigsManager(config.getConfig());
 

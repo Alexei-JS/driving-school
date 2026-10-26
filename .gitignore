@@ -39,3 +39,7 @@ out/
 
 # Токен бота и админа
 bot.properties
+
+#Тестовая БД и расписание
+schedule.txt
+students.txt

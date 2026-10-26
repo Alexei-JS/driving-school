@@ -12,6 +12,10 @@ public class TelegramUI implements BotUI {
         this.chatId = chatId;
     }
 
+    public long getChatId() {
+        return chatId;
+    }
+
     @Override
     public void sendMessage(String text) {
         SendMessage message = new SendMessage();

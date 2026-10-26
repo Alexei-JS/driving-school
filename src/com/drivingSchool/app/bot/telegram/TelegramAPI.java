@@ -22,6 +22,8 @@ public class TelegramAPI extends TelegramLongPollingBot {
 
     private final StudentRepository repository = new InMemoryStudentRepository();
     private final long adminId = Long.parseLong(props.getProperty("bot.admin_id"));
+    private boolean isWaitingForSchedule = false;
+    private boolean isWaitingForForm = false;
 
     @Override
     public void onUpdateReceived(Update update) {
@@ -64,10 +66,19 @@ public class TelegramAPI extends TelegramLongPollingBot {
 
                 @Override
                 public boolean getSchedule() {
-                    ui.sendMessage("📅 *Расписание занятий:*\n\n" +
-                        "📚 *Теория:* Пн, Ср, Пт — 18:00–20:00\n" +
-                        "🚙 *Практика:* Вт, Чт — по записи с инструктором\n" +
-                        "📝 *Экзамен:* Сб — 10:00 (по готовности группы)");
+                    if (ui.getChatId() == adminId) {
+                        isWaitingForSchedule = true;
+                        ui.sendMessage("👑 Вы вошли как администратор.\n\n" +
+                            "Отправьте новый текст расписания одним сообщением.\n" +
+                            "Или напишите /cancel для отмены.");
+                    } else {
+                        try {
+                            String content = java.nio.file.Files.readString(java.nio.file.Path.of("schedule.txt"));
+                            ui.sendMessage("📅 *Расписание занятий:*\n\n" + content);
+                        } catch (Exception e) {
+                            ui.sendMessage("📅 Расписание пока не задано.");
+                        }
+                    }
                     return true;
                 }
 
@@ -113,8 +124,53 @@ public class TelegramAPI extends TelegramLongPollingBot {
                     ui.sendMessage("✍️ *Обратная связь:*\nЧтобы оставить отзыв или задать вопрос, напишите нашему администратору: @n1tr0gen1um");
                     return true;
                 }
+
+                @Override
+                public boolean getCompleteForm() {
+                    isWaitingForForm = true;
+                    ui.sendMessage("📝 *Запись на курс*\n\n" +
+                        "Отправьте данные одним сообщением в формате:\n" +
+                        "`ФИО, Возраст, Категория (A/B/C), Справка (да/нет)`\n\n" +
+                        "Пример: Иван Иванов, 25, B, да\n" +
+                        "Или напишите /cancel для отмены.");
+                    return true;
+                }
             };
 
+            if (isWaitingForSchedule && chatId == adminId) {
+                if (text.equals("/cancel")) {
+                    isWaitingForSchedule = false;
+                    ui.sendMessage("❌ Отмена. Расписание не изменено.");
+                } else {
+                    try {
+                        java.nio.file.Files.writeString(java.nio.file.Path.of("schedule.txt"), text, java.nio.charset.StandardCharsets.UTF_8);
+                        isWaitingForSchedule = false;
+                        ui.sendMessage("✅ Расписание успешно обновлено!");
+                    } catch (Exception e) {
+                        ui.sendMessage("Ошибка сохранения: " + e.getMessage());
+                    }
+                }
+                return;
+            }
+
+            if (isWaitingForForm) {
+                if (text.equals("/cancel")) {
+                    isWaitingForForm = false;
+                    ui.sendMessage("❌ Отмена. Вы не записаны.");
+                } else {
+                    try (java.io.OutputStreamWriter fw = new java.io.OutputStreamWriter(new java.io.FileOutputStream("students.txt", true), java.nio.charset.StandardCharsets.UTF_8)) {
+                        // Добавляем ID пользователя и время регистрации
+                        long timestamp = System.currentTimeMillis();
+                        fw.write("[" + timestamp + "] " + text + "\n");
+                        isWaitingForForm = false;
+                        ui.sendMessage("✅ Вы успешно записаны на курс!\nМы свяжемся с вами в ближайшее время.");
+                    } catch (Exception e) {
+                        ui.sendMessage("Ошибка записи: " + e.getMessage());
+                    }
+                }
+                return;
+            }
+            
             handler.handler(text).getAsBoolean();
         }
     }

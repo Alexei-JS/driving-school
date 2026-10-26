@@ -36,3 +36,6 @@ replay_pid*
 # Тестовый файл
 test.java
 out/
+
+# Токен бота и админа
+bot.properties

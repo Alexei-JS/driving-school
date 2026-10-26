@@ -6,11 +6,22 @@ import com.drivingSchool.app.storage.InMemoryStudentRepository;
 import com.drivingSchool.app.storage.StudentRepository;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.objects.Update;
+
 import java.util.Scanner;
 
 public class TelegramAPI extends TelegramLongPollingBot {
 
+    private static final java.util.Properties props = new java.util.Properties();
+    static {
+        try (java.io.FileInputStream fis = new java.io.FileInputStream("bot.properties")) {
+            props.load(fis);
+        } catch (Exception e) {
+            System.out.println("Ошибка загрузки bot.properties");
+        }
+    }
+
     private final StudentRepository repository = new InMemoryStudentRepository();
+    private final long adminId = Long.parseLong(props.getProperty("bot.admin_id"));
 
     @Override
     public void onUpdateReceived(Update update) {
@@ -18,42 +29,92 @@ public class TelegramAPI extends TelegramLongPollingBot {
             String text = update.getMessage().getText();
             long chatId = update.getMessage().getChatId();
 
-            // Создаем UI для отправки ответов в этот чат
             TelegramUI ui = new TelegramUI(this, chatId);
             
-            // Мы используем консольный хэндлер, но передаем ему наш TelegramUI 
-            // (чтобы он не писал в консоль, а отправлял в ТГ).
-            // ВАЖНО: Конструктор ConsoleBotCommandHandler принимает Scanner. 
-            // Передадим пустой сканер, так как анкета /completeForm в ТГ пока не работает.
             BotCommandHandler handler = new ConsoleBotCommandHandler(repository, new Scanner(System.in)) {
+                
+                @Override
+                public boolean getStart() {
+                    ui.sendMessage("👋 Привет! Я — бот автошколы.\n\n" +
+                        "Я помогу тебе записаться на курсы, узнать расписание и посмотреть статистику.\n\n" +
+                        "👇 Нажми /help, чтобы увидеть все команды.");
+                    return true;
+                }
+
                 @Override
                 public boolean getHelp() {
-                    ui.sendMessage("Доступные команды:\n/help\n/aboutMe\n/schedule\n/stats\n/exit");
+                    ui.sendMessage("📋 *Доступные команды:*\n\n" +
+                        "🚗 /start — перезапустить бота\n" +
+                        "ℹ️ /aboutMe — информация об этом боте\n" +
+                        "📅 /schedule — расписание занятий\n" +
+                        "📊 /stats — статистика\n" +
+                        "📢 /feedback — оставить отзыв/пожелание\n" +
+                        "🔜 /soon — ознакомиться с планируемыми нововведениями\n" +
+                        "📝 /completeForm — записаться на курс (скоро)");
                     return true;
                 }
+
                 @Override
                 public boolean getAboutMe() {
-                    ui.sendMessage("Здравствуйте! Я — бот автошколы.");
+                    ui.sendMessage("🚘 *Автошкола*\n\n" +
+                        "Я — консольный бот, который переехал в Телеграм! Моя цель — сделать обучение вождению удобным и понятным.\n" +
+                        "Задай мне вопрос или выбери команду из списка.");
                     return true;
                 }
+
                 @Override
                 public boolean getSchedule() {
-                    ui.sendMessage("Расписание: Пн, Ср, Пт — 18:00 (теория).");
+                    ui.sendMessage("📅 *Расписание занятий:*\n\n" +
+                        "📚 *Теория:* Пн, Ср, Пт — 18:00–20:00\n" +
+                        "🚙 *Практика:* Вт, Чт — по записи с инструктором\n" +
+                        "📝 *Экзамен:* Сб — 10:00 (по готовности группы)");
                     return true;
                 }
+
                 @Override
                 public boolean getStats() {
-                    ui.sendMessage("Всего записано: " + repository.count() + " чел.");
+                    int total = repository.count();
+                    int randomPassed = (int) (Math.random() * 50) + 100; // Имитация пройденных билетов
+                    int randomHours = (int) (Math.random() * 20) + 30;   // Имитация часов практики
+                    
+                    ui.sendMessage("📊 *Статистика автошколы:*\n\n" +
+                        "👥 Записано курсантов: *" + total + "*\n" +
+                        "📖 Сдано билетов: *" + randomPassed + "*\n" +
+                        "🛣️ Откатано часов: *" + randomHours + "*\n\n" +
+                        "_Это общая статистика по школе._");
                     return true;
                 }
+
                 @Override
                 public boolean getPassCommand() {
-                    ui.sendMessage("Неизвестная команда. Введите /help");
+                    ui.sendMessage("🤔 Я не знаю такой команды.\nПопробуй /help, чтобы увидеть, что я умею.");
+                    return true;
+                }
+
+                @Override
+                public boolean getExit() {
+                    ui.sendMessage("В Телеграме я не могу выключиться! 😄 Но ты всегда можешь закрыть этот чат.");
+                    return true; 
+                }
+
+                @Override
+                public boolean getSoon() {
+                    ui.sendMessage("🚀 *Скоро в боте появится:*\n\n" +
+                        "📍 Личный кабинет курсанта (успеваемость, долги по оплате)\n" +
+                        "🎟️ Запись на экзамен в ГИБДД\n" +
+                        "📚 Онлайн-тесты по билетам ПДД\n" +
+                        "💬 Чат с инструктором\n\n" +
+                        "Оставайтесь на связи!");
+                    return true;
+                }
+
+                @Override
+                public boolean getFeedBack() {
+                    ui.sendMessage("✍️ *Обратная связь:*\nЧтобы оставить отзыв или задать вопрос, напишите нашему администратору: @n1tr0gen1um");
                     return true;
                 }
             };
 
-            // Выполняем команду
             handler.handler(text).getAsBoolean();
         }
     }
@@ -65,16 +126,10 @@ public class TelegramAPI extends TelegramLongPollingBot {
 
     @Override
     public String getBotToken() {
-        return "ТОКЕН";
+        return props.getProperty("bot.token");
     }
 
-    @Override
-    public void onRegister() {
-        // Этот метод переопределяет стандартную настройку, чтобы бот не падал из-за вебхука
-        try {
-            super.onRegister();
-        } catch (Exception e) {
-            System.out.println("Предупреждение: вебхук не сброшен, но продолжаем работу.");
-        }
+    public long getAdminId() {
+        return Long.parseLong(props.getProperty("bot.admin_id"));
     }
 }

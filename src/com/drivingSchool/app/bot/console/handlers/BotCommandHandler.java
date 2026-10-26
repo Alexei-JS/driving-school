@@ -12,5 +12,7 @@ public interface BotCommandHandler {
     boolean getAboutMe();
     boolean getSchedule();
 	boolean getStats();
-    boolean getPassCommand(); // Функция заглушка, когда введена неверная команда
+    boolean getPassCommand();
+	boolean getFeedBack();
+	boolean getSoon();
 }

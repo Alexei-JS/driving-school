@@ -17,6 +17,9 @@ public class TelegramUI implements BotUI {
         SendMessage message = new SendMessage();
         message.setChatId(chatId);
         message.setText(text);
+
+        message.setParseMode("Markdown");
+
         try {
             bot.execute(message);
         } catch (Exception e) {

@@ -7,7 +7,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 
 
-public class PropertyConfigLoader {
+public class PropertyConfigLoader implements ConfigLoader {
     private Config config;
 
 	public PropertyConfigLoader(String pathConfigFile) {
@@ -26,6 +26,7 @@ public class PropertyConfigLoader {
 		    );
 		}
 	}
-	
+
+	@Override
 	public Config getConfig() { return this.config; }
 }

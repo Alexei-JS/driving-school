@@ -19,12 +19,15 @@ public class ConsoleBotCommandHandler implements BotCommandHandler {
     }
 	
 	public final Map<String, BooleanSupplier> commands = Map.<String, BooleanSupplier>of(
+			"/start", this::getStart,
 			"/exit", this::getExit,
 			"/aboutMe", this::getAboutMe,
 			"/help", this::getHelp,
 			"/schedule", this::getSchedule,
 			"/completeForm", this::getCompleteForm,
-			"/stats", this::getStats
+			"/stats", this::getStats,
+			"/feedback", this::getFeedBack,
+			"/soon", this::getSoon
 	);
 	
 	@Override
@@ -63,6 +66,8 @@ public class ConsoleBotCommandHandler implements BotCommandHandler {
 			"/completeForm  — записаться на курс (анкета курсанта)\n" +
 			"/schedule      — расписание занятий\n" +
 			"/stats         — получить статистику\n" +
+			"/feedback      — оставить обратную связь" +
+			"/soon          — планируемые нововведения" +
 			"/exit          — завершить работу бота");
 		return true;
 	}
@@ -122,4 +127,16 @@ public class ConsoleBotCommandHandler implements BotCommandHandler {
 
 		return true;
 	}
+
+	@Override
+    public boolean getFeedBack() {
+        System.out.println("Обратная связь доступна в Телеграм-боте.");
+        return true;
+    }
+
+    @Override
+    public boolean getSoon() {
+        System.out.println("Новые функции скоро появятся в Телеграм-боте.");
+        return true;
+    }
 }

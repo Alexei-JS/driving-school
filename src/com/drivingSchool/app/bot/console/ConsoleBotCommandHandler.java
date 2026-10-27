@@ -1,9 +1,10 @@
-package com.drivingSchool.app.bot.console.handlers;
+package com.drivingSchool.app.bot.console;
 
 import java.util.Map;
 import java.util.Scanner;
 import java.util.function.BooleanSupplier;
 
+import com.drivingSchool.app.bot.BotCommandHandler;
 import com.drivingSchool.app.forms.EnrollmentForm;
 import com.drivingSchool.app.models.Student;
 import com.drivingSchool.app.storage.StudentRepository;

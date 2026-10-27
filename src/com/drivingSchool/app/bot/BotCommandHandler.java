@@ -1,4 +1,4 @@
-package com.drivingSchool.app.bot.console.handlers;
+package com.drivingSchool.app.bot;
 
 import java.util.function.BooleanSupplier;
 

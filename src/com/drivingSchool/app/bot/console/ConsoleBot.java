@@ -4,8 +4,7 @@ import java.util.Scanner;
 
 import com.drivingSchool.app.storage.InMemoryStudentRepository;
 import com.drivingSchool.app.storage.StudentRepository;
-import com.drivingSchool.app.bot.console.handlers.ConsoleBotCommandHandler;
-import com.drivingSchool.app.bot.console.handlers.BotCommandHandler;
+import com.drivingSchool.app.bot.BotCommandHandler;
 
 public class ConsoleBot
 {

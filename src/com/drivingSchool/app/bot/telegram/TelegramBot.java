@@ -1,15 +1,15 @@
 package com.drivingSchool.app.bot.telegram;
 
-import com.drivingSchool.app.bot.console.handlers.BotCommandHandler;
-import com.drivingSchool.app.bot.console.handlers.ConsoleBotCommandHandler;
-import com.drivingSchool.app.storage.InMemoryStudentRepository;
-import com.drivingSchool.app.storage.StudentRepository;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.objects.Update;
-
 import java.util.Scanner;
 
-public class TelegramAPI extends TelegramLongPollingBot {
+import com.drivingSchool.app.bot.BotCommandHandler;
+import com.drivingSchool.app.bot.console.ConsoleBotCommandHandler;
+import com.drivingSchool.app.storage.InMemoryStudentRepository;
+import com.drivingSchool.app.storage.StudentRepository;
+
+public class TelegramBot extends TelegramLongPollingBot {
 
     private static final java.util.Properties props = new java.util.Properties();
     static {

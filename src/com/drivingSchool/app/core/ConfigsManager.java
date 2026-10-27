@@ -1,6 +1,7 @@
 package com.drivingSchool.app.core;
 
 import com.drivingSchool.app.bot.console.ConsoleBot;
+import com.drivingSchool.app.bot.telegram.TelegramBot;
 import com.drivingSchool.app.core.confings.Config;
 
 
@@ -21,7 +22,7 @@ public class ConfigsManager {
             case "telegram" -> {
                 try {
                     org.telegram.telegrambots.meta.TelegramBotsApi api = new org.telegram.telegrambots.meta.TelegramBotsApi(org.telegram.telegrambots.updatesreceivers.DefaultBotSession.class);
-                    com.drivingSchool.app.bot.telegram.TelegramAPI bot = new com.drivingSchool.app.bot.telegram.TelegramAPI();
+                    TelegramBot bot = new TelegramBot();
                     api.registerBot(bot);
                     System.out.println("Telegram бот успешно запущен!");
                     

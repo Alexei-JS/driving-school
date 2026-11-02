@@ -1,76 +1,49 @@
 package com.drivingSchool.app.forms;
 
-import java.util.Scanner;
-
 import com.drivingSchool.app.models.Student;
 import com.drivingSchool.app.storage.StudentRepository;
 
-/**
- * Анкета курсанта. Опрашивает пользователя, валидирует ввод,
- * создаёт объект Student и добавляет его в переданный список.
- */
 public class EnrollmentForm {
 
-    public static boolean run(Scanner scanner, StudentRepository repository) {
+    public static boolean saveStudent(String fullName, String ageStr, String category, String hasCertStr, StudentRepository repository) {
         System.out.println("--- Запись на курс ---");
 
-        String fullName = askFullName(scanner);
-        int age = askAge(scanner);
-        String category = askCategory(scanner);
-        boolean hasMedicalCert = askMedicalCert(scanner);
-
-        Student student = new Student(fullName, age, category, hasMedicalCert);
-        repository.add(student);
-
-        System.out.println("Курсант успешно записан:");
-        System.out.println(student);
-        return true;
-    }
-
-    private static String askFullName(Scanner scanner) {
-        String fullName;
-        while (true) {
-            System.out.print("Введите ФИО: ");
-            String input = scanner.nextLine().stripTrailing();
-            if (!input.isEmpty()) {
-                fullName = input;
-                break;
-            }
-            System.out.println("ФИО не может быть пустым. Попробуйте снова.");
+        if (fullName == null || fullName.trim().isEmpty() || fullName.matches(".*\\d.*")) {
+            System.out.println("Ошибка: ФИО не должно быть пустым или содержать цифры.");
+            return false;
         }
-        return fullName;
-    }
 
-    private static int askAge(Scanner scanner) {
         int age;
-        while (true) {
-            System.out.print("Введите возраст: ");
-            String input = scanner.nextLine().stripTrailing();
-            if (input.matches("[0-9]+")) {
-                age = Integer.parseInt(input);
-                break;
+        try {
+            age = Integer.parseInt(ageStr.trim());
+            if (age < 16 || age > 100) {
+                System.out.println("Ошибка: Возраст должен быть от 16 до 100 лет.");
+                return false;
             }
-            System.out.println("Это не число. Введите возраст как целое число лет.");
+        } catch (NumberFormatException e) {
+            System.out.println("Ошибка: Возраст должен быть числом.");
+            return false;
         }
-        return age;
-    }
 
-    private static String askCategory(Scanner scanner) {
-        String category;
-        while (true) {
-            System.out.print("Введите категорию (A/B/C): ");
-            String input = scanner.nextLine().stripTrailing().toUpperCase();
-            if (input.equals("A") || input.equals("B") || input.equals("C")) {
-                category = input;
-                break;
-            }
-            System.out.println("Допустимые категории: A, B, C. Попробуйте снова.");
+        String cat = category.trim().toUpperCase();
+        if (!cat.equals("A") && !cat.equals("B") && !cat.equals("C")) {
+            System.out.println("Ошибка: Категория должна быть A, B или C.");
+            return false;
         }
-        return category;
-    }
 
-    private static boolean askMedicalCert(Scanner scanner) {
-        System.out.print("Получена ли справка от медкомиссии? (да/нет): ");
-        return scanner.nextLine().stripTrailing().equalsIgnoreCase("да");
+        boolean hasCert;
+        if (hasCertStr.trim().equalsIgnoreCase("да")) {
+            hasCert = true;
+        } else if (hasCertStr.trim().equalsIgnoreCase("нет")) {
+            hasCert = false;
+        } else {
+            System.out.println("Ошибка: Ответ про справку должен быть 'да' или 'нет'.");
+            return false;
+        }
+
+        Student student = new Student(fullName.trim(), age, cat, hasCert);
+        repository.add(student);
+        System.out.println("Курсант успешно записан: " + student);
+        return true;
     }
 }

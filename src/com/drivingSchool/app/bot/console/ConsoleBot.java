@@ -16,7 +16,7 @@ public class ConsoleBot
 
     
     public static boolean run() {
-    	Scanner scanner = new Scanner(System.in);
+    	Scanner scanner = new Scanner(System.in, "Cp866");
     	System.out.println(introduction);
 		String request;
 

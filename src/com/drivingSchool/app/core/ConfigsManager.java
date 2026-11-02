@@ -21,16 +21,28 @@ public class ConfigsManager {
             }
             case "telegram" -> {
                 try {
+                    // Загружаем bot.properties прямо здесь
+                    java.util.Properties props = new java.util.Properties();
+                    try (java.io.FileInputStream fis = new java.io.FileInputStream("bot.properties")) {
+                        props.load(fis);
+                    } catch (Exception e) {
+                        System.out.println("Ошибка загрузки bot.properties");
+                    }
+
+                    String token = props.getProperty("bot.token");
+                    long adminId = Long.parseLong(props.getProperty("bot.admin_id"));
+
                     org.telegram.telegrambots.meta.TelegramBotsApi api = new org.telegram.telegrambots.meta.TelegramBotsApi(org.telegram.telegrambots.updatesreceivers.DefaultBotSession.class);
-                    TelegramBot bot = new TelegramBot();
+                    
+                    // Передаем токен и ID в конструктор
+                    TelegramBot bot = new TelegramBot(token, adminId);
                     api.registerBot(bot);
                     System.out.println("Telegram бот успешно запущен!");
                     
-                    // ожидание ctrl+c для выключения
                     Thread.currentThread().join(); 
                 } catch (Exception e) {
                     System.out.println("Ошибка запуска ТГ: " + e.getMessage());
-                    e.printStackTrace(); // для логов
+                    e.printStackTrace();
                 }
             }
             default -> {

@@ -33,9 +33,7 @@ public class ConfigsManager {
                     e.printStackTrace(); // для логов
                 }
             }
-            default -> {
-                throw new RuntimeException("Такой тип интерфейса не поддерживается! (Укажите другой config)");
-            }
+            default -> { throw new RuntimeException("Такой тип интерфейса не поддерживается! (Укажите другой config)"); }
         }
     }
 }

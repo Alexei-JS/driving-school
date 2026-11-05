@@ -3,6 +3,9 @@ package com.drivingSchool.app.core;
 import com.drivingSchool.app.bot.console.ConsoleBot;
 import com.drivingSchool.app.bot.telegram.TelegramBot;
 import com.drivingSchool.app.core.confings.Config;
+import com.drivingSchool.app.storage.StudentRepository;
+import com.drivingSchool.app.storage.DataBaseStudents;
+import com.drivingSchool.app.storage.InMemoryStudentRepository;
 
 
 public class ConfigsManager {
@@ -13,10 +16,19 @@ public class ConfigsManager {
     }
 
     public void run() {
+        // Определяем среду хранения
+        StudentRepository repository;
+        if (this.config.saveMode().equals("memory")) {
+            repository = new InMemoryStudentRepository();
+        }
+        else { repository = new DataBaseStudents(); }
+
+
+        // Выбираем нужный API
         switch (this.config.api())
         {
             case "console" -> {
-                if (!ConsoleBot.run())
+                if (!ConsoleBot.run(repository))
                     System.out.println("!!! БОТ АВАРИЙНО ЗАВЕРШИЛ РАБОТУ !!!");
             }
             case "telegram" -> {

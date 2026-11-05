@@ -5,7 +5,11 @@ import com.drivingSchool.app.storage.StudentRepository;
 
 public class EnrollmentForm {
 
-    public static boolean saveStudent(String fullName, String ageStr, String category, String hasCertStr, StudentRepository repository) {
+    public static boolean saveStudent(String fullName,
+                                      String ageStr,
+                                      String category,
+                                      String hasCertStr,
+                                      StudentRepository repository) {
         System.out.println("--- Запись на курс ---");
 
         if (fullName == null || fullName.trim().isEmpty() || fullName.matches(".*\\d.*")) {

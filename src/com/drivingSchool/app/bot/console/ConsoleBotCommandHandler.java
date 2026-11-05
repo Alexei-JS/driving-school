@@ -39,7 +39,7 @@ public class ConsoleBotCommandHandler implements BotCommandHandler {
 	
 	@Override
 	public boolean getStart() {
-		System.out.println("Бот успешно запущен!");
+		System.out.print("Бот успешно запущен!\n");
 		BooleanSupplier currentCommand;
         boolean isRunning = true;
 
@@ -55,27 +55,27 @@ public class ConsoleBotCommandHandler implements BotCommandHandler {
 	
 	@Override
 	public boolean getExit() {
-		System.out.println("Бот завершил свою работу. До скорых встреч!");
+		System.out.print("Бот завершил свою работу. До скорых встреч!\n");
 		return false;
 	}
 	
 	@Override
 	public boolean getHelp() {
-		System.out.println("Доступные команды:\n" +
+		System.out.print("Доступные команды:\n" +
 			"/help          — показать список команд\n" +
 			"/aboutMe       — информация о боте\n" +
 			"/completeForm  — записаться на курс (анкета курсанта)\n" +
 			"/schedule      — расписание занятий\n" +
 			"/stats         — получить статистику\n" +
-			"/feedback      — оставить обратную связь" +
-			"/soon          — планируемые нововведения" +
-			"/exit          — завершить работу бота");
+			"/feedback      — оставить обратную связь\n" +
+			"/soon          — планируемые нововведения\n" +
+			"/exit          — завершить работу бота\n");
 		return true;
 	}
 	
 	@Override
 	public boolean getCompleteForm() {
-		System.out.println("--- Запись на курс ---");
+		System.out.print("--- Запись на курс ---\n");
 		String name = ask("Введите ФИО: ");
 		String age = ask("Введите возраст: ");
 		String cat = ask("Введите категорию (A/B/C): ");
@@ -91,31 +91,31 @@ public class ConsoleBotCommandHandler implements BotCommandHandler {
 
 	@Override
 	public boolean getAboutMe() {
-		System.out.println("Здравствуйте! Я — консольный бот автошколы.\n" +
+		System.out.print("Здравствуйте! Я — консольный бот автошколы.\n" +
 			"Я помогу вам записаться на курс, узнать расписание и посмотреть статистику.\n" +
-			"Введите /help, чтобы увидеть список доступных команд.");
+			"Введите /help, чтобы увидеть список доступных команд.\n");
 		return true;
 	}
 
 	@Override
 	public boolean getSchedule() {
-		System.out.println("Расписание занятий:\n" +
+		System.out.print("Расписание занятий:\n" +
 			"Теория:    понедельник, среда, пятница — 18:00–20:00\n" +
 			"Практика:  вторник, четверг — по записи с инструктором\n" +
-			"Экзамен:   суббота — 10:00 (по готовности группы)");
+			"Экзамен:   суббота — 10:00 (по готовности группы)\n");
 		return true;
 	}
 	
 	@Override
 	public boolean getPassCommand() {
-		System.out.println("Неизвестная команда. Введите /help, чтобы увидеть список доступных команд.");
+		System.out.print("Неизвестная команда. Введите /help, чтобы увидеть список доступных команд.\n");
 		return true;
 	}
 
 	@Override
 	public boolean getStats() {
 		if (repository.isEmpty()) {
-			System.out.println("Пока никто не записан. Воспользуйтесь /completeForm, чтобы записаться на курс.");
+			System.out.print("Пока никто не записан. Воспользуйтесь /completeForm, чтобы записаться на курс.\n");
 			return true;
 		}
 
@@ -132,7 +132,7 @@ public class ConsoleBotCommandHandler implements BotCommandHandler {
 
 		double averageAge = (double) sumAge / total;
 
-		System.out.println("Статистика по курсантам:");
+		System.out.print("Статистика по курсантам:\n");
 		System.out.printf("Всего записано: %d%n", total);
 		System.out.printf("Средний возраст: %.1f лет%n", averageAge);
 		System.out.printf("Со справкой от медкомиссии: %d из %d%n", withCert, total);
@@ -142,13 +142,13 @@ public class ConsoleBotCommandHandler implements BotCommandHandler {
 
 	@Override
     public boolean getFeedBack() {
-        System.out.println("Обратная связь доступна в Телеграм-боте.");
+        System.out.print("Обратная связь доступна в Телеграм-боте.\n");
         return true;
     }
 
     @Override
     public boolean getSoon() {
-        System.out.println("Новые функции скоро появятся в Телеграм-боте.");
+        System.out.print("Новые функции скоро появятся в Телеграм-боте.\n");
         return true;
     }
 }

@@ -12,10 +12,7 @@ public class ConsoleBot
             "Я помогу вам записаться на курс, узнать расписание и посмотреть статистику.\n" +
             "Введите `/start`, чтобы начать работать со мной.";
     
-    private static final StudentRepository repository = new InMemoryStudentRepository();
-
-    
-    public static boolean run() {
+    public static boolean run(StudentRepository repository) {
     	Scanner scanner = new Scanner(System.in, "Cp866");
     	System.out.println(introduction);
 		String request;

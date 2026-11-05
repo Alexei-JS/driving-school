@@ -4,10 +4,13 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 
 public class TelegramUI implements TelegramBotUI {
     private final TelegramBot bot;
-    private final long chatId;
+    private long chatId;
 
-    public TelegramUI(TelegramBot bot, long chatId) {
+    public TelegramUI(TelegramBot bot) {
         this.bot = bot;
+    }
+
+    public void setChatId(long chatId) {
         this.chatId = chatId;
     }
 
@@ -20,7 +23,6 @@ public class TelegramUI implements TelegramBotUI {
         SendMessage message = new SendMessage();
         message.setChatId(chatId);
         message.setText(text);
-
         message.setParseMode("Markdown");
 
         try {

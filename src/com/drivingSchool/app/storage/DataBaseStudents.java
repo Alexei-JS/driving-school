@@ -7,11 +7,13 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.Statement;
 import java.sql.SQLException;
+import java.sql.ResultSet;
 
 // Иморты со встроенными в язык модулями
 import java.nio.file.Files;
 import java.io.IOException;
 import java.util.List;
+import java.util.ArrayList;
 
 // Импорты для исключений
 import java.lang.RuntimeException;
@@ -25,9 +27,9 @@ public class DataBaseStudents implements StudentRepository {
         private static final String USER = "admin";
         private static final String PASSWORD = "driving-school";
 
-        private Connection connection;
+        private final Connection connection;
 
-        public void DataBaseStudents() {
+        public DataBaseStudents() {
             try (Connection connection = DriverManager.getConnection(URL, USER, PASSWORD)) {
                 this.connection = connection;
             }
@@ -69,17 +71,50 @@ public class DataBaseStudents implements StudentRepository {
 
         @Override
         public List<Student> getAll() {
-            throw new UnsupportedOperationException("Метод getAll еще не реализован.");
+            String sqlRequest = "SELECT * FROM Students";
+            try (PreparedStatement executorQuery = this.connection.prepareStatement(sqlRequest)) {
+                List<Student> studentsList = new ArrayList<>();
+                ResultSet responseTable = executorQuery.executeQuery();
+                do {
+                    Student student = new Student(
+                            //responseTable.getInt("id"),
+                            responseTable.getString("fullname"),
+                            responseTable.getInt("age"),
+                            responseTable.getString("category"),
+                            responseTable.getBoolean("hasMedicalCert")
+                    );
+                    studentsList.add(student);
+                } while (responseTable.next());
+
+                return studentsList;
+            }
+            catch (SQLException error) {
+                throw new IllegalStateException("Неудалось извлечь список таблицу всех студентов");
+            }
         }
 
         @Override
         public int count() {
-            throw new UnsupportedOperationException("Метод count еще не реализован.");
+            String sqlRequest = "SELECT COUNT(*) as amount_students FROM Students";
+            try (Statement counterStudents = this.connection.createStatement()) {
+                ResultSet responseTable = counterStudents.executeQuery(sqlRequest);
+                return responseTable.getInt("amount_students");
+            }
+            catch (SQLException error) { // Бросаем НЕКОНТРОЛИРУЕМОЕ исключение
+                throw new IllegalStateException("Ошибка в подсчете количества студентов");
+            }
         }
 
         @Override
         public boolean isEmpty() {
-            throw new UnsupportedOperationException("Метод isEmpty еще не реализован.");
+            String sqlRequest = "SELECT EXISTS (SELECT 1 FROM Students) as state";
+            try (Statement executorQuery = this.connection.createStatement()) {
+                ResultSet responseTable = executorQuery.executeQuery(sqlRequest);
+                return responseTable.getBoolean("state");
+            }
+            catch (SQLException error) {
+                throw new IllegalStateException("Неудалось проверить таблицу на предмет значений");
+            }
         }
 
 }

@@ -24,7 +24,8 @@ public class EnrollmentForm {
                 System.out.println("Ошибка: Возраст должен быть от 16 до 100 лет.");
                 return false;
             }
-        } catch (NumberFormatException e) {
+        }
+        catch (NumberFormatException e) {
             System.out.println("Ошибка: Возраст должен быть числом.");
             return false;
         }

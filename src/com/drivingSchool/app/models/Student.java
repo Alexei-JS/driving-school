@@ -1,16 +1,25 @@
 package com.drivingSchool.app.models;
 
 public class Student {
-    private static int studentId = 1;
+    private static int studentCounterId = 1;
 
+    private int studentId;
     private String fullName;
     private int age;
     private String category;
     private boolean hasMedicalCert;
 
     public Student(String fullName, int age, String category, boolean hasMedicalCert) {
-        this.studentId = Student.studentId++; // отсчет идет с 1.
+        this.studentId = Student.studentCounterId++; // отсчет идет с 1.
 
+        this.fullName = fullName;
+        this.age = age;
+        this.category = category;
+        this.hasMedicalCert = hasMedicalCert;
+    }
+
+    public Student(int studentId, String fullName, int age, String category, boolean hasMedicalCert) {
+        this.studentId = studentId;
         this.fullName = fullName;
         this.age = age;
         this.category = category;

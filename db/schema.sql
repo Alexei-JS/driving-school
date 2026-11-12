@@ -1,5 +1,6 @@
-CREATE DATABASE IF NOT EXISTS DrivingSchool;
-USE DrivingSchool;
+-- CREATE DATABASE IF NOT EXISTS DrivingSchool;
+-- USE DrivingSchool;
+DROP TABLE IF EXISTS Students;
 
 CREATE TABLE IF NOT EXISTS Students (
     id INT PRIMARY KEY,

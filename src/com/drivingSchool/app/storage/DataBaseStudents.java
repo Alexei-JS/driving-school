@@ -23,14 +23,15 @@ import com.drivingSchool.app.models.Student;
 
 
 public class DataBaseStudents implements StudentRepository {
-        private static final String URL = "jdbc:mysql://localhost:3306/DrivingSchool?serverTimezone=UTC";
+        private static final String URL = "jdbc:mysql://localhost:3306/DrivingSchool?serverTimezone=UTC&useSSL=false&allowPublicKeyRetrieval=true&allowMultiQueries=true";
         private static final String USER = "admin";
         private static final String PASSWORD = "driving-school";
 
         private final Connection connection;
 
         public DataBaseStudents() {
-            try (Connection connection = DriverManager.getConnection(URL, USER, PASSWORD)) {
+            try {
+                Connection connection = DriverManager.getConnection(URL, USER, PASSWORD);
                 this.connection = connection;
             }
             catch (SQLException error) {
@@ -47,7 +48,9 @@ public class DataBaseStudents implements StudentRepository {
                 throw new RuntimeException("Файла создания БД не существует или неправильный указан путь");
             }
             catch (SQLException error) {
-                throw new RuntimeException("При подключении отправлении запроса на создания БД произошла ошибка");
+                error.printStackTrace();
+                throw new RuntimeException("При отправлении запроса на создания БД произошла ошибка: "
+                                            + error.getMessage());
             }
         }
 
@@ -65,6 +68,7 @@ public class DataBaseStudents implements StudentRepository {
                 studentInsertQuery.executeUpdate(); // Выполнение запроса на вставку данных
             }
             catch (SQLException error) {
+                error.printStackTrace();
                 throw new IllegalStateException("Ошибка в записи студента в БД");
             }
         }
@@ -77,7 +81,7 @@ public class DataBaseStudents implements StudentRepository {
                 ResultSet responseTable = executorQuery.executeQuery();
                 do {
                     Student student = new Student(
-                            //responseTable.getInt("id"),
+                            responseTable.getInt("id"),
                             responseTable.getString("fullname"),
                             responseTable.getInt("age"),
                             responseTable.getString("category"),

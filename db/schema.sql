@@ -3,9 +3,9 @@
 DROP TABLE IF EXISTS Students;
 
 CREATE TABLE IF NOT EXISTS Students (
-    id INT PRIMARY KEY,
-    fullName VARCHAR(60) NOT NULL,
+    student_id INT PRIMARY KEY AUTO_INCREMENT,
+    full_name VARCHAR(60) NOT NULL,
     age INTEGER NOT NULL,
     category VARCHAR(3) NOT NULL,
-    hasMedicalCert BOOLEAN NOT NULL
+    has_medical_cert BOOLEAN NOT NULL
 );

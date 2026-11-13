@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <!-- Координаты твоего проекта -->
+    <!-- Координаты проекта -->
     <groupId>com.example</groupId>
     <artifactId>my-project</artifactId>
     <version>1.0-SNAPSHOT</version>
@@ -19,6 +19,11 @@
     <!-- Внешние библиотеки -->
     <dependencies>
         <dependency>
+            <groupId>org.hibernate.orm</groupId>
+            <artifactId>hibernate-core</artifactId>
+            <version>7.4.1.Final</version>
+        </dependency>
+        <dependency>
             <groupId>org.telegram</groupId>
             <artifactId>telegrambots</artifactId>
             <version>6.1.0</version>
@@ -29,4 +34,24 @@
             <version>${mysql.version}</version>
         </dependency>
     </dependencies>
+
+    <!-- Сборка проекта -->
+    <build>
+        <!-- Папка из который брать файлы для компиляции -->
+        <sourceDirectory>src</sourceDirectory>
+
+        <!--
+        Файлы проекта, которые нужно просто скопировать в
+        в неизменном виде, для запуска пользователем, который
+        не должен видеть исходный код. (делаем для папки target)
+        -->
+        <resources>
+            <resource>
+                <directory>src</directory>
+                <excludes> <!-- Список исключений -->
+                    <exclude>**/*.java</exclude>
+                </excludes>
+            </resource>
+        </resources>
+    </build>
 </project>

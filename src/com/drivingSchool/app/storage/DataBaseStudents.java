@@ -9,116 +9,61 @@ import java.sql.Statement;
 import java.sql.SQLException;
 import java.sql.ResultSet;
 
+import org.hibernate.SessionException;
+import org.hibernate.SessionFactory;
+import org.hibernate.Session;
+import org.hibernate.Transaction;
+
 // Иморты со встроенными в язык модулями
 import java.nio.file.Files;
 import java.io.IOException;
 import java.util.List;
 import java.util.ArrayList;
 
-// Импорты для исключений
-import java.lang.RuntimeException;
-
 // Иморты текущих классов проекта
 import com.drivingSchool.app.models.Student;
 
 
 public class DataBaseStudents implements StudentRepository {
-        private static final String URL = "jdbc:mysql://localhost:3306/DrivingSchool?serverTimezone=UTC&useSSL=false&allowPublicKeyRetrieval=true&allowMultiQueries=true";
-        private static final String USER = "admin";
-        private static final String PASSWORD = "driving-school";
+    private final SessionFactory sessionFactory;
 
-        private final Connection connection;
+    public DataBaseStudents(SessionFactory sessionFactory) {
+        this.sessionFactory = sessionFactory;
+    }
 
-        public DataBaseStudents() {
+    @Override
+    public void add(Student student) {
+        try (Session session = this.sessionFactory.openSession()){
+            Transaction transaction = session.beginTransaction();
             try {
-                Connection connection = DriverManager.getConnection(URL, USER, PASSWORD);
-                this.connection = connection;
+                session.persist(student);
+                transaction.commit();
             }
-            catch (SQLException error) {
-                throw new RuntimeException("Ошибка подключения к БД");
-            }
-
-            // Создаем базу данных, через подключение connection.
-            try {
-                String sqlSchema = Files.readString(Path.of("db/schema.sql"));
-                Statement sqlExecutor = this.connection.createStatement();
-                sqlExecutor.execute(sqlSchema);
-            }
-            catch (IOException error) {
-                throw new RuntimeException("Файла создания БД не существует или неправильный указан путь");
-            }
-            catch (SQLException error) {
-                error.printStackTrace();
-                throw new RuntimeException("При отправлении запроса на создания БД произошла ошибка: "
-                                            + error.getMessage());
+            catch (RuntimeException error) {
+                transaction.rollback();
+                throw new IllegalStateException("Ошибка в записи студента в БД", error);
             }
         }
+    }
 
+    @Override
+    public List<Student> getAll() {
+        // Еще не реализован
+    }
 
-        @Override
-        public void add(Student student) {
-            String sqlRequest = "INSERT INTO Students (id, fullName, age, category, hasMedicalCert) VALUES (?, ?, ?, ?, ?)";
-            try (PreparedStatement studentInsertQuery = this.connection.prepareStatement(sqlRequest)) {
+    @Override
+    public int count() {
+        // Еще не реализован
+    }
 
-                studentInsertQuery.setInt(1, student.getStudentId());
-                studentInsertQuery.setString(2, student.getFullName());
-                studentInsertQuery.setInt(3, student.getAge());
-                studentInsertQuery.setString(4, student.getCategory());
-                studentInsertQuery.setBoolean(5, student.hasMedicalCert());
-                studentInsertQuery.executeUpdate(); // Выполнение запроса на вставку данных
-            }
-            catch (SQLException error) {
-                error.printStackTrace();
-                throw new IllegalStateException("Ошибка в записи студента в БД");
-            }
-        }
+    @Override
+    public boolean isEmpty() {
+        // Еще не реализован
+    }
 
-        @Override
-        public List<Student> getAll() {
-            String sqlRequest = "SELECT * FROM Students";
-            try (PreparedStatement executorQuery = this.connection.prepareStatement(sqlRequest)) {
-                List<Student> studentsList = new ArrayList<>();
-                ResultSet responseTable = executorQuery.executeQuery();
-                do {
-                    Student student = new Student(
-                            responseTable.getInt("id"),
-                            responseTable.getString("fullname"),
-                            responseTable.getInt("age"),
-                            responseTable.getString("category"),
-                            responseTable.getBoolean("hasMedicalCert")
-                    );
-                    studentsList.add(student);
-                } while (responseTable.next());
-
-                return studentsList;
-            }
-            catch (SQLException error) {
-                throw new IllegalStateException("Неудалось извлечь список таблицу всех студентов");
-            }
-        }
-
-        @Override
-        public int count() {
-            String sqlRequest = "SELECT COUNT(*) as amount_students FROM Students";
-            try (Statement counterStudents = this.connection.createStatement()) {
-                ResultSet responseTable = counterStudents.executeQuery(sqlRequest);
-                return responseTable.getInt("amount_students");
-            }
-            catch (SQLException error) { // Бросаем НЕКОНТРОЛИРУЕМОЕ исключение
-                throw new IllegalStateException("Ошибка в подсчете количества студентов");
-            }
-        }
-
-        @Override
-        public boolean isEmpty() {
-            String sqlRequest = "SELECT EXISTS (SELECT 1 FROM Students) as state";
-            try (Statement executorQuery = this.connection.createStatement()) {
-                ResultSet responseTable = executorQuery.executeQuery(sqlRequest);
-                return responseTable.getBoolean("state");
-            }
-            catch (SQLException error) {
-                throw new IllegalStateException("Неудалось проверить таблицу на предмет значений");
-            }
-        }
+    @Override
+    public void close() {
+        this.sessionFactory.close();
+    }
 
 }

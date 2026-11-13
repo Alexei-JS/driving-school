@@ -16,13 +16,7 @@ public class ConfigsManager {
     }
 
     public void run() {
-        // Определяем среду хранения
-        StudentRepository repository;
-        if (this.config.saveMode().equals("memory")) {
-            repository = new InMemoryStudentRepository();
-        }
-        else { repository = new DataBaseStudents(); }
-
+        StudentRepository repository = this.createRepository();
 
         // Выбираем нужный API
         switch (this.config.api())
@@ -57,7 +51,25 @@ public class ConfigsManager {
                     e.printStackTrace();
                 }
             }
-            default -> { throw new RuntimeException("Такой тип интерфейса не поддерживается! (Укажите другой config)"); }
+            default -> {
+                throw new UnsupportedOperationException("Проблема в config.properties, неверный api");
+            }
+        }
+    }
+
+    private StudentRepository createRepository() {
+        switch (this.config.saveMode())
+        {
+            case "inMemory" -> {
+                return new InMemoryStudentRepository();
+            }
+            case "inDataBase" -> {
+                HibernateConnection hibernateConnection = new HibernateConnection();
+                return new DataBaseStudents(hibernateConnection.getSessionFactory());
+            }
+            default -> {
+                throw new UnsupportedOperationException("Проблема в config.properties, неверный saveMode");
+            }
         }
     }
 }

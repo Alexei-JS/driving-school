@@ -1,5 +1,5 @@
 -- CREATE DATABASE IF NOT EXISTS DrivingSchool;
--- USE DrivingSchool;
+USE DrivingSchool;
 DROP TABLE IF EXISTS Students;
 
 CREATE TABLE IF NOT EXISTS Students (

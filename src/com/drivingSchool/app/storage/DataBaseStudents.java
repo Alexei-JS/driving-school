@@ -13,6 +13,7 @@ import org.hibernate.SessionException;
 import org.hibernate.SessionFactory;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
+import org.hibernate.query.Query;
 
 // Иморты со встроенными в язык модулями
 import java.nio.file.Files;
@@ -33,7 +34,7 @@ public class DataBaseStudents implements StudentRepository {
 
     @Override
     public void add(Student student) {
-        try (Session session = this.sessionFactory.openSession()){
+        try (Session session = this.sessionFactory.openSession()) {
             Transaction transaction = session.beginTransaction();
             try {
                 session.persist(student);
@@ -48,17 +49,47 @@ public class DataBaseStudents implements StudentRepository {
 
     @Override
     public List<Student> getAll() {
-        // Еще не реализован
+        try (Session session = this.sessionFactory.openSession()){
+            Transaction transaction = session.beginTransaction();
+
+            try {
+                String hqlQuery = "FROM Students";
+                Query<Student> query = session.createQuery(hqlQuery, Student.class);
+                List<Student> result = query.getResultList();
+
+                transaction.commit();
+                return result;
+            }
+            catch (RuntimeException error) {
+                transaction.rollback();
+                throw new IllegalStateException("Ошибка при запросе списка всех студентов", error);
+            }
+        }
     }
 
     @Override
     public int count() {
-        // Еще не реализован
+        try (Session session = this.sessionFactory.openSession()) {
+            Transaction transaction = session.beginTransaction();
+
+            try {
+                String hqlQuery = "SELECT CAST(COUNT(*) AS INTEGER) FROM Students";
+                Query<Integer> query = session.createQuery(hqlQuery, Integer.class);
+                Integer result = query.getSingleResult();
+
+                transaction.commit();
+                return (result != null) ? (result) : (0);
+            }
+            catch (RuntimeException error) {
+                transaction.rollback();
+                throw new IllegalStateException("Ошибка при подсчете количества студентов", error);
+            }
+        }
     }
 
     @Override
     public boolean isEmpty() {
-        // Еще не реализован
+        return this.count() == 0;
     }
 
     @Override

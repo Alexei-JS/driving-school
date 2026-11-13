@@ -1,16 +1,38 @@
 package com.drivingSchool.app.models;
 
-public class Student {
-    private static int studentId = 1;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
+import jakarta.persistence.Id;
+import jakarta.persistence.Column;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 
+
+@Entity
+@Table(name = "Students")
+public class Student {
+    @Id @Column(name = "student_id")
+    @GeneratedValue(strategy = GenerationType.IDENTITY) // Для AUTO_INCREMENT
+    private int studentId;
+
+    @Column(name = "full_name")
     private String fullName;
+
+    @Column(name = "age")
     private int age;
+
+    @Column(name = "category")
     private String category;
+
+    @Column(name = "has_medical_cert")
     private boolean hasMedicalCert;
 
-    public Student(String fullName, int age, String category, boolean hasMedicalCert) {
-        this.studentId = Student.studentId++; // отсчет идет с 1.
+    protected Student() {
+        // Пустой конструктор для Hibernate (изменение через рефлексию)
+    }
 
+    public Student(String fullName, int age, String category, boolean hasMedicalCert) {
+        // Для заполнения поля studentId нужно вызвать save() в репозиторий.
         this.fullName = fullName;
         this.age = age;
         this.category = category;

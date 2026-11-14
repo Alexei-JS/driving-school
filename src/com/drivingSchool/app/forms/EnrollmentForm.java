@@ -3,53 +3,40 @@ package com.drivingSchool.app.forms;
 import com.drivingSchool.app.models.Student;
 import com.drivingSchool.app.storage.StudentRepository;
 
-
 public class EnrollmentForm {
-
-    public static boolean saveStudent(String fullName,
-                                      String ageStr,
-                                      String category,
-                                      String hasCertStr,
-                                      StudentRepository repository) {
-        System.out.println("--- Запись на курс ---");
-
+    public static String saveStudent(String fullName, String ageStr, String category, String hasCertStr, StudentRepository repository) {
         if (fullName == null || fullName.trim().isEmpty() || fullName.matches(".*\\d.*")) {
-            System.out.println("Ошибка: ФИО не должно быть пустым или содержать цифры.");
-            return false;
+            return "❌ ФИО не должно быть пустым или содержать цифры.";
         }
 
         int age;
         try {
             age = Integer.parseInt(ageStr.trim());
             if (age < 16 || age > 100) {
-                System.out.println("Ошибка: Возраст должен быть от 16 до 100 лет.");
-                return false;
+                return "❌ Возраст должен быть от 16 до 100 лет.";
             }
-        }
-        catch (NumberFormatException e) {
-            System.out.println("Ошибка: Возраст должен быть числом.");
-            return false;
+        } catch (NumberFormatException e) {
+            return "❌ Возраст должен быть числом.";
         }
 
         String cat = category.trim().toUpperCase();
         if (!cat.equals("A") && !cat.equals("B") && !cat.equals("C")) {
-            System.out.println("Ошибка: Категория должна быть A, B или C.");
-            return false;
+            return "❌ Категория должна быть A, B или C.";
         }
 
         boolean hasCert;
-        if (hasCertStr.trim().equalsIgnoreCase("да")) {
+        String certAnswer = hasCertStr.trim().toLowerCase();
+        if (certAnswer.equals("да") || certAnswer.equals("yes") || certAnswer.equals("y")) {
             hasCert = true;
-        } else if (hasCertStr.trim().equalsIgnoreCase("нет")) {
+        } else if (certAnswer.equals("нет") || certAnswer.equals("no") || certAnswer.equals("n")) {
             hasCert = false;
         } else {
-            System.out.println("Ошибка: Ответ про справку должен быть 'да' или 'нет'.");
-            return false;
+            return "❌ Ответ про справку должен быть 'да' или 'нет'.";
         }
 
         Student student = new Student(fullName.trim(), age, cat, hasCert);
         repository.add(student);
-        System.out.println("Курсант успешно записан: " + student);
-        return true;
+        System.out.println("Курсант успешно записан: " + student); // Лог для консолиsaveStudent
+        return null;
     }
 }

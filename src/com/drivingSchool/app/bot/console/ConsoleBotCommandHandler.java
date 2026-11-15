@@ -73,16 +73,20 @@ public class ConsoleBotCommandHandler implements BotCommandHandler {
 
     @Override
     public boolean getCompleteForm() {
-        System.out.println("--- Запись на курс ---");
-        String name = ask("Введите ФИО: ");
-        String age = ask("Введите возраст: ");
-        String cat = ask("Введите категорию (A/B/C): ");
-        String cert = ask("Есть справка? (да/нет): ");
+        String error;
+        do {
+            System.out.println("--- Запись на курс ---");
+            String name = ask("Введите ФИО: ");
+            String age = ask("Введите возраст: ");
+            String cat = ask("Введите категорию (A/B/C): ");
+            String cert = ask("Есть справка? (да/нет): ");
 
-        String error = EnrollmentForm.saveStudent(name, age, cat, cert, repository);
-        if (error != null) {
-            System.out.println(error);
-        }
+            error = EnrollmentForm.saveStudent(name, age, cat, cert, repository);
+            if (error != null) {
+                System.out.println(error);
+                System.out.println("Заполните форму еще раз:");
+            }
+        } while (error != null);
         return true;
     }
 

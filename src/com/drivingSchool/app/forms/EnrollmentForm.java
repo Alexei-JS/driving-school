@@ -37,7 +37,7 @@ public class EnrollmentForm {
             return false;
         }
 
-        boolean hasCert;
+        boolean hasCert = true;
         if (hasCertStr.trim().equalsIgnoreCase("да")) {
             hasCert = true;
         } else if (hasCertStr.trim().equalsIgnoreCase("нет")) {

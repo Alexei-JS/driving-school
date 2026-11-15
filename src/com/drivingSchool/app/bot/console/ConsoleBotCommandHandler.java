@@ -9,38 +9,36 @@ import com.drivingSchool.app.forms.EnrollmentForm;
 import com.drivingSchool.app.models.Student;
 import com.drivingSchool.app.storage.StudentRepository;
 
-
 public class ConsoleBotCommandHandler implements BotCommandHandler {
-	private final StudentRepository repository;
-	private final Scanner scanner;
+    private final StudentRepository repository;
+    private final Scanner scanner;
 
     public ConsoleBotCommandHandler(StudentRepository repository, Scanner scanner) {
         this.repository = repository;
-		this.scanner = scanner;
+        this.scanner = scanner;
     }
-	
-	public final Map<String, BooleanSupplier> commands = Map.<String, BooleanSupplier>of(
-			"/start", this::getStart,
-			"/exit", this::getExit,
-			"/aboutMe", this::getAboutMe,
-			"/help", this::getHelp,
-			"/schedule", this::getSchedule,
-			"/completeForm", this::getCompleteForm,
-			"/stats", this::getStats,
-			"/feedback", this::getFeedBack,
-			"/soon", this::getSoon
-	);
-	
-	@Override
-	public BooleanSupplier handler(String commandName) {
-	    return commands.getOrDefault(commandName, this::getPassCommand);
-	}
-	
-	
-	@Override
-	public boolean getStart() {
-		System.out.print("Бот успешно запущен!\n");
-		BooleanSupplier currentCommand;
+
+    public final Map<String, BooleanSupplier> commands = Map.<String, BooleanSupplier>of(
+            "/start", this::getStart,
+            "/exit", this::getExit,
+            "/aboutMe", this::getAboutMe,
+            "/help", this::getHelp,
+            "/schedule", this::getSchedule,
+            "/completeForm", this::getCompleteForm,
+            "/stats", this::getStats,
+            "/feedback", this::getFeedBack,
+            "/soon", this::getSoon
+    );
+
+    @Override
+    public BooleanSupplier handler(String commandName) {
+        return commands.getOrDefault(commandName, this::getPassCommand);
+    }
+
+    @Override
+    public boolean getStart() {
+        System.out.println("Бот успешно запущен!");
+        BooleanSupplier currentCommand;
         boolean isRunning = true;
 
         do {
@@ -50,105 +48,109 @@ public class ConsoleBotCommandHandler implements BotCommandHandler {
             currentCommand = this.handler(request);
             isRunning = currentCommand.getAsBoolean();
         } while (isRunning);
-	    return true;
-	}
-	
-	@Override
-	public boolean getExit() {
-		System.out.print("Бот завершил свою работу. До скорых встреч!\n");
-		return false;
-	}
-	
-	@Override
-	public boolean getHelp() {
-		System.out.print("Доступные команды:\n" +
-			"/help          — показать список команд\n" +
-			"/aboutMe       — информация о боте\n" +
-			"/completeForm  — записаться на курс (анкета курсанта)\n" +
-			"/schedule      — расписание занятий\n" +
-			"/stats         — получить статистику\n" +
-			"/feedback      — оставить обратную связь\n" +
-			"/soon          — планируемые нововведения\n" +
-			"/exit          — завершить работу бота\n");
-		return true;
-	}
-	
-	@Override
-	public boolean getCompleteForm() {
-		System.out.print("--- Запись на курс ---\n");
-		String name = ask("Введите ФИО: ");
-		String age = ask("Введите возраст: ");
-		String cat = ask("Введите категорию (A/B/C): ");
-		String cert = ask("Есть справка? (да/нет): ");
+        return true;
+    }
 
-		return EnrollmentForm.saveStudent(name, age, cat, cert, repository);
-	}
+    @Override
+    public boolean getExit() {
+        System.out.println("Бот завершил свою работу. До скорых встреч!");
+        return false;
+    }
 
-	private String ask(String prompt) {
-		System.out.print(prompt);
-		return scanner.nextLine().trim();
-	}
+    @Override
+    public boolean getHelp() {
+        System.out.println("Доступные команды:\n" +
+                "/help          — показать список команд\n" +
+                "/aboutMe       — информация о боте\n" +
+                "/completeForm  — записаться на курс (анкета курсанта)\n" +
+                "/schedule      — расписание занятий\n" +
+                "/stats         — получить статистику\n" +
+                "/feedback      — оставить обратную связь\n" +
+                "/soon          — планируемые нововведения\n" +
+                "/exit          — завершить работу бота");
+        return true;
+    }
 
-	@Override
-	public boolean getAboutMe() {
-		System.out.print("Здравствуйте! Я — консольный бот автошколы.\n" +
-			"Я помогу вам записаться на курс, узнать расписание и посмотреть статистику.\n" +
-			"Введите /help, чтобы увидеть список доступных команд.\n");
-		return true;
-	}
+    @Override
+    public boolean getCompleteForm() {
+        System.out.println("--- Запись на курс ---");
+        String name = ask("Введите ФИО: ");
+        String age = ask("Введите возраст: ");
+        String cat = ask("Введите категорию (A/B/C): ");
+        String cert = ask("Есть справка? (да/нет): ");
 
-	@Override
-	public boolean getSchedule() {
-		System.out.print("Расписание занятий:\n" +
-			"Теория:    понедельник, среда, пятница — 18:00–20:00\n" +
-			"Практика:  вторник, четверг — по записи с инструктором\n" +
-			"Экзамен:   суббота — 10:00 (по готовности группы)\n");
-		return true;
-	}
-	
-	@Override
-	public boolean getPassCommand() {
-		System.out.print("Неизвестная команда. Введите /help, чтобы увидеть список доступных команд.\n");
-		return true;
-	}
+        String error = EnrollmentForm.saveStudent(name, age, cat, cert, repository);
+        if (error != null) {
+            System.out.println(error);
+        }
+        return true;
+    }
 
-	@Override
-	public boolean getStats() {
-		if (repository.isEmpty()) {
-			System.out.print("Пока никто не записан. Воспользуйтесь /completeForm, чтобы записаться на курс.\n");
-			return true;
-		}
+    @Override
+    public boolean getAboutMe() {
+        System.out.println("Здравствуйте! Я — консольный бот автошколы.\n" +
+                "Я помогу вам записаться на курс, узнать расписание и посмотреть статистику.\n" +
+                "Введите /help, чтобы увидеть список доступных команд.");
+        return true;
+    }
 
-		int total = repository.count();
-		int sumAge = 0;
-		int withCert = 0;
+    @Override
+    public boolean getSchedule() {
+        System.out.println("Расписание занятий:\n" +
+                "Теория:    понедельник, среда, пятница — 18:00–20:00\n" +
+                "Практика:  вторник, четверг — по записи с инструктором\n" +
+                "Экзамен:   суббота — 10:00 (по готовности группы)");
+        return true;
+    }
 
-		for (Student student : repository.getAll()) {
-			sumAge += student.getAge();
-			if (student.hasMedicalCert()) {
-				withCert++;
-			}
-		}
+    @Override
+    public boolean getPassCommand() {
+        System.out.println("Неизвестная команда. Введите /help, чтобы увидеть список доступных команд.");
+        return true;
+    }
 
-		double averageAge = (double) sumAge / total;
+    @Override
+    public boolean getStats() {
+        if (repository.isEmpty()) {
+            System.out.println("Пока никто не записан. Воспользуйтесь /completeForm, чтобы записаться на курс.");
+            return true;
+        }
 
-		System.out.print("Статистика по курсантам:\n");
-		System.out.printf("Всего записано: %d%n", total);
-		System.out.printf("Средний возраст: %.1f лет%n", averageAge);
-		System.out.printf("Со справкой от медкомиссии: %d из %d%n", withCert, total);
+        int total = repository.count();
+        int sumAge = 0;
+        int withCert = 0;
 
-		return true;
-	}
+        for (Student student : repository.getAll()) {
+            sumAge += student.getAge();
+            if (student.hasMedicalCert()) {
+                withCert++;
+            }
+        }
 
-	@Override
+        double averageAge = (double) sumAge / total;
+
+        System.out.println("Статистика по курсантам:");
+        System.out.printf("Всего записано: %d%n", total);
+        System.out.printf("Средний возраст: %.1f лет%n", averageAge);
+        System.out.printf("Со справкой от медкомиссии: %d из %d%n", withCert, total);
+
+        return true;
+    }
+
+    @Override
     public boolean getFeedBack() {
-        System.out.print("Обратная связь доступна в Телеграм-боте.\n");
+        System.out.println("Обратная связь доступна в Телеграм-боте.");
         return true;
     }
 
     @Override
     public boolean getSoon() {
-        System.out.print("Новые функции скоро появятся в Телеграм-боте.\n");
+        System.out.println("Новые функции скоро появятся в Телеграм-боте.");
         return true;
+    }
+
+    private String ask(String prompt) {
+        System.out.print(prompt);
+        return scanner.nextLine().trim();
     }
 }

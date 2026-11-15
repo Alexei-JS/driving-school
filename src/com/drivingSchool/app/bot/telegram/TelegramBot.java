@@ -26,8 +26,8 @@ public class TelegramBot extends TelegramLongPollingBot {
     private final TelegramUI ui;
     private final BotCommandHandler handler;
     
-    private boolean isWaitingForSchedule = false;
-    private boolean isWaitingForForm = false;
+    private final java.util.Map<Long, Boolean> isWaitingForSchedule = new java.util.HashMap<>();
+    private final java.util.Map<Long, Boolean> isWaitingForForm = new java.util.HashMap<>();
 
     public TelegramBot(String token, long adminId) {
         this.token = token;
@@ -69,7 +69,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             @Override
             public boolean getSchedule() {
                 if (ui.getChatId() == adminId) {
-                    isWaitingForSchedule = true;
+                    isWaitingForSchedule.put(ui.getChatId(), true);
                     ui.sendMessage("👑 Вы вошли как администратор.\n\n" +
                         "Отправьте новый текст расписания одним сообщением.\n" +
                         "Или напишите /cancel для отмены.");
@@ -128,7 +128,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
             @Override
             public boolean getCompleteForm() {
-                isWaitingForForm = true;
+                isWaitingForForm.put(ui.getChatId(), true);
                 ui.sendMessage("📝 *Запись на курс*\n\n" +
                     "Отправьте данные одним сообщением в формате:\n" +
                     "`ФИО, Возраст, Категория (A/B/C), Справка (да/нет)`\n\n" +
@@ -215,14 +215,14 @@ public class TelegramBot extends TelegramLongPollingBot {
                 return;
             }
 
-            if (isWaitingForSchedule && chatId == adminId) {
+            if (isWaitingForSchedule.getOrDefault(chatId, false) && chatId == adminId) {
                 if (text.equals("/cancel")) {
-                    isWaitingForSchedule = false;
+                    isWaitingForSchedule.put(chatId, false);
                     ui.sendMessage("❌ Отмена. Расписание не изменено.");
                 } else {
                     try {
                         java.nio.file.Files.writeString(java.nio.file.Path.of("schedule.txt"), text, java.nio.charset.StandardCharsets.UTF_8);
-                        isWaitingForSchedule = false;
+                        isWaitingForSchedule.put(chatId, false);
                         ui.sendMessage("✅ Расписание успешно обновлено!");
                     } catch (Exception e) {
                         ui.sendMessage("Ошибка сохранения: " + e.getMessage());
@@ -231,9 +231,9 @@ public class TelegramBot extends TelegramLongPollingBot {
                 return;
             }
 
-            if (isWaitingForForm) {
+            if (isWaitingForForm.getOrDefault(chatId, false)) {
                 if (text.equals("/cancel")) {
-                    isWaitingForForm = false;
+                    isWaitingForForm.put(chatId, false);
                     ui.sendMessage("❌ Отмена. Вы не записаны.");
                 } else {
                     String[] parts = text.split(",");
@@ -246,16 +246,18 @@ public class TelegramBot extends TelegramLongPollingBot {
                     String cat = parts[2].trim();
                     String cert = parts[3].trim();
 
-                    boolean success = EnrollmentForm.saveStudent(name, age, cat, cert, repository);
-                    if (success) {
+                    String error = EnrollmentForm.saveStudent(name, age, cat, cert, repository);
+                    if (error == null) {
+                        // Успех
                         try (java.io.OutputStreamWriter fw = new java.io.OutputStreamWriter(new java.io.FileOutputStream("students.txt", true), java.nio.charset.StandardCharsets.UTF_8)) {
                             long timestamp = System.currentTimeMillis();
                             fw.write("[" + timestamp + "] " + text + "\n");
                         } catch (Exception e) { e.printStackTrace(); }
-                        isWaitingForForm = false;
+                        isWaitingForForm.put(chatId, false);
                         ui.sendMessage("✅ Вы успешно записаны на курс!");
                     } else {
-                        ui.sendMessage("❌ Ошибка валидации. Проверьте данные и попробуйте снова (или введите /cancel).");
+                        // Ошибка
+                        ui.sendMessage(error + "\nПопробуйте снова или введите /cancel.");
                     }
                 }
                 return;

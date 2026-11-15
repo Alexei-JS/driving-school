@@ -7,79 +7,94 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.Statement;
 import java.sql.SQLException;
+import java.sql.ResultSet;
+
+import org.hibernate.SessionException;
+import org.hibernate.SessionFactory;
+import org.hibernate.Session;
+import org.hibernate.Transaction;
+import org.hibernate.query.Query;
 
 // Иморты со встроенными в язык модулями
 import java.nio.file.Files;
 import java.io.IOException;
 import java.util.List;
-
-// Импорты для исключений
-import java.lang.RuntimeException;
+import java.util.ArrayList;
 
 // Иморты текущих классов проекта
 import com.drivingSchool.app.models.Student;
 
 
 public class DataBaseStudents implements StudentRepository {
-        private static final String URL = "jdbc:mysql://localhost:3306/DrivingSchool?serverTimezone=UTC";
-        private static final String USER = "admin";
-        private static final String PASSWORD = "driving-school";
+    private final SessionFactory sessionFactory;
 
-        private Connection connection;
+    public DataBaseStudents(SessionFactory sessionFactory) {
+        this.sessionFactory = sessionFactory;
+    }
 
-        public void DataBaseStudents() {
-            try (Connection connection = DriverManager.getConnection(URL, USER, PASSWORD)) {
-                this.connection = connection;
-            }
-            catch (SQLException error) {
-                throw new RuntimeException("Ошибка подключения к БД");
-            }
-
-            // Создаем базу данных, через подключение connection.
+    @Override
+    public void add(Student student) {
+        try (Session session = this.sessionFactory.openSession()) {
+            Transaction transaction = session.beginTransaction();
             try {
-                String sqlSchema = Files.readString(Path.of("db/schema.sql"));
-                Statement sqlExecutor = this.connection.createStatement();
-                sqlExecutor.execute(sqlSchema);
+                session.persist(student);
+                transaction.commit();
             }
-            catch (IOException error) {
-                throw new RuntimeException("Файла создания БД не существует или неправильный указан путь");
-            }
-            catch (SQLException error) {
-                throw new RuntimeException("При подключении отправлении запроса на создания БД произошла ошибка");
+            catch (RuntimeException error) {
+                transaction.rollback();
+                throw new IllegalStateException("Ошибка в записи студента в БД", error);
             }
         }
+    }
 
+    @Override
+    public List<Student> getAll() {
+        try (Session session = this.sessionFactory.openSession()){
+            Transaction transaction = session.beginTransaction();
 
-        @Override
-        public void add(Student student) {
-            String sqlRequest = "INSERT INTO Students (id, fullName, age, category, hasMedicalCert) VALUES (?, ?, ?, ?, ?)";
-            try (PreparedStatement studentInsertQuery = this.connection.prepareStatement(sqlRequest)) {
+            try {
+                String hqlQuery = "FROM Students";
+                Query<Student> query = session.createQuery(hqlQuery, Student.class);
+                List<Student> result = query.getResultList();
 
-                studentInsertQuery.setInt(1, student.getStudentId());
-                studentInsertQuery.setString(2, student.getFullName());
-                studentInsertQuery.setInt(3, student.getAge());
-                studentInsertQuery.setString(4, student.getCategory());
-                studentInsertQuery.setBoolean(5, student.hasMedicalCert());
-                studentInsertQuery.executeUpdate(); // Выполнение запроса на вставку данных
+                transaction.commit();
+                return result;
             }
-            catch (SQLException error) {
-                throw new IllegalStateException("Ошибка в записи студента в БД");
+            catch (RuntimeException error) {
+                transaction.rollback();
+                throw new IllegalStateException("Ошибка при запросе списка всех студентов", error);
             }
         }
+    }
 
-        @Override
-        public List<Student> getAll() {
-            throw new UnsupportedOperationException("Метод getAll еще не реализован.");
-        }
+    @Override
+    public int count() {
+        try (Session session = this.sessionFactory.openSession()) {
+            Transaction transaction = session.beginTransaction();
 
-        @Override
-        public int count() {
-            throw new UnsupportedOperationException("Метод count еще не реализован.");
-        }
+            try {
+                String hqlQuery = "SELECT CAST(COUNT(*) AS INTEGER) FROM Students";
+                Query<Integer> query = session.createQuery(hqlQuery, Integer.class);
+                Integer result = query.getSingleResult();
 
-        @Override
-        public boolean isEmpty() {
-            throw new UnsupportedOperationException("Метод isEmpty еще не реализован.");
+                transaction.commit();
+                return (result != null) ? (result) : (0);
+            }
+            catch (RuntimeException error) {
+                transaction.rollback();
+                throw new IllegalStateException("Ошибка при подсчете количества студентов", error);
+            }
         }
+    }
+
+    @Override
+    public boolean isEmpty() {
+        return this.count() == 0;
+    }
+
+    @Override
+    public void close() {
+        this.sessionFactory.close();
+    }
 
 }

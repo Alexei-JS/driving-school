@@ -53,7 +53,7 @@ public class DataBaseStudents implements StudentRepository {
             Transaction transaction = session.beginTransaction();
 
             try {
-                String hqlQuery = "FROM Students";
+                String hqlQuery = "FROM Student";
                 Query<Student> query = session.createQuery(hqlQuery, Student.class);
                 List<Student> result = query.getResultList();
 
@@ -73,7 +73,7 @@ public class DataBaseStudents implements StudentRepository {
             Transaction transaction = session.beginTransaction();
 
             try {
-                String hqlQuery = "SELECT CAST(COUNT(*) AS INTEGER) FROM Students";
+                String hqlQuery = "SELECT CAST(COUNT(*) AS INTEGER) FROM Student";
                 Query<Integer> query = session.createQuery(hqlQuery, Integer.class);
                 Integer result = query.getSingleResult();
 

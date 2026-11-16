@@ -19,7 +19,11 @@ public class EnrollmentForm {
             return "<<< Возраст должен быть числом. >>>";
         }
 
-        String cat = category.trim().toUpperCase();
+        String cat = category.trim().toUpperCase()
+                .replace('А', 'A')
+                .replace('В', 'B')
+                .replace('С', 'C');
+
         if (!cat.equals("A") && !cat.equals("B") && !cat.equals("C")) {
             return "<<< Категория должна быть A, B или C. >>>";
         }

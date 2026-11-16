@@ -11,9 +11,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
 /**
- * Хранилище билетов и прогресса пользователей.
+ * Хранилище билетов и прогресса пользователей
  * Билеты читаются один раз при старте из папки data/tickets.
- * Для каждого chatId держится свой {@link Run}
  */
 public class TicketService {
     private final Map<Integer, Ticket> tickets = new TreeMap<>();
@@ -76,7 +75,6 @@ public class TicketService {
         return run;
     }
 
-    /** запомнить последний результат, чтобы показать его в личном кабинете. */
     public void rememberResult(long chatId, String result) {
         this.lastResults.put(chatId, result);
     }
@@ -89,7 +87,7 @@ public class TicketService {
         this.runs.remove(chatId);
     }
 
-    /** Прохождение*/
+    // Прохождение одного билета одним пользователем
     public static final class Run {
         private final Ticket ticket;
         private int index;

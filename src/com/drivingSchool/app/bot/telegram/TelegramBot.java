@@ -17,6 +17,8 @@ import com.drivingSchool.app.bot.console.ConsoleBotCommandHandler;
 import com.drivingSchool.app.storage.InMemoryStudentRepository;
 import com.drivingSchool.app.storage.StudentRepository;
 import com.drivingSchool.app.forms.EnrollmentForm;
+import com.drivingSchool.app.tickets.Question;
+import com.drivingSchool.app.tickets.TicketService;
 
 public class TelegramBot extends TelegramLongPollingBot {
 
@@ -25,16 +27,19 @@ public class TelegramBot extends TelegramLongPollingBot {
     private final StudentRepository repository;
     private final TelegramUI ui;
     private final BotCommandHandler handler;
-    
+
     private final java.util.Map<Long, Boolean> isWaitingForSchedule = new java.util.HashMap<>();
     private final java.util.Map<Long, Boolean> isWaitingForForm = new java.util.HashMap<>();
 
-    public TelegramBot(String token, long adminId) {
+    private final TicketService tickets =
+            new TicketService(java.nio.file.Path.of("data", "tickets"));
+
+    public TelegramBot(String token, long adminId, StudentRepository repository) {
         this.token = token;
         this.adminId = adminId;
-        this.repository = new InMemoryStudentRepository();
+        this.repository = repository;
         this.ui = new TelegramUI(this);
-        
+
         // Создаем хэндлер один раз
         this.handler = new ConsoleBotCommandHandler(repository, new Scanner(System.in)) {
             @Override
@@ -51,6 +56,8 @@ public class TelegramBot extends TelegramLongPollingBot {
                     "🚗 /start — перезапустить бота\n" +
                     "ℹ️ /aboutMe — информация об этом боте\n" +
                     "📅 /schedule — расписание занятий\n" +
+                    "📚 /tickets — решать экзаменационные билеты\n" +
+                    "👤 /profile — личный кабинет\n" +
                     "📊 /stats — статистика\n" +
                     "📢 /feedback — оставить отзыв/пожелание\n" +
                     "🔜 /soon — ознакомиться с планируемыми нововведениями\n" +
@@ -149,6 +156,13 @@ public class TelegramBot extends TelegramLongPollingBot {
             int messageId = update.getCallbackQuery().getMessage().getMessageId();
             ui.setChatId(callbackChatId);
 
+            if (callData.startsWith("ticket_") || callData.startsWith("again_")
+                    || callData.startsWith("answer_") || callData.startsWith("next")
+                    || callData.equals("tickets_menu")) {
+                this.handleTicketCallback(callbackChatId, callData, callbackQueryId);
+                return;
+            }
+
             // Навигация по дням
             if (callData.startsWith("day_")) {
                 int page = Integer.parseInt(callData.substring(4));
@@ -215,6 +229,16 @@ public class TelegramBot extends TelegramLongPollingBot {
                 return;
             }
 
+            if (text.equals("/tickets")) {
+                this.showTicketMenu(chatId);
+                return;
+            }
+
+            if (text.equals("/profile")) {
+                this.showProfile(chatId);
+                return;
+            }
+
             if (isWaitingForSchedule.getOrDefault(chatId, false) && chatId == adminId) {
                 if (text.equals("/cancel")) {
                     isWaitingForSchedule.put(chatId, false);
@@ -251,7 +275,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                         // Успех
                         try (java.io.OutputStreamWriter fw = new java.io.OutputStreamWriter(new java.io.FileOutputStream("students.txt", true), java.nio.charset.StandardCharsets.UTF_8)) {
                             long timestamp = System.currentTimeMillis();
-                            fw.write("[" + timestamp + "] " + text + "\n");
+                            fw.write("[" + timestamp + "] [" + chatId + "] " + text + "\n");
                         } catch (Exception e) { e.printStackTrace(); }
                         isWaitingForForm.put(chatId, false);
                         ui.sendMessage("✅ Вы успешно записаны на курс!");
@@ -265,6 +289,322 @@ public class TelegramBot extends TelegramLongPollingBot {
             
             handler.handler(text).getAsBoolean();
         }
+    }
+
+    //Билеты
+
+    private void handleTicketCallback(long chatId, String data, String callbackQueryId) {
+        AnswerCallbackQuery answer = new AnswerCallbackQuery();
+        answer.setCallbackQueryId(callbackQueryId);
+        try {
+            execute(answer);
+        } catch (Exception ignored) {
+        }
+
+        if (data.equals("tickets_menu")) {
+            this.showTicketMenu(chatId);
+            return;
+        }
+
+        String[] parts = data.split("_");
+
+        if (parts[0].equals("ticket") || parts[0].equals("again")) {
+            this.startTicket(chatId, Integer.parseInt(parts[1]));
+            return;
+        }
+
+        if (parts[0].equals("answer")) {
+            this.answerQuestion(chatId, Integer.parseInt(parts[1]));
+            return;
+        }
+
+        if (parts[0].equals("next")) {
+            this.nextQuestion(chatId);
+        }
+    }
+
+    private void showTicketMenu(long chatId) {
+        if (this.tickets.isEmpty()) {
+            this.send(chatId, "📚 Билеты пока не загружены.\nПоложите файлы в data/tickets.", null);
+            return;
+        }
+
+        List<InlineKeyboardButton> row = new ArrayList<>();
+        List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
+
+        for (int number : this.tickets.numbers()) {
+            InlineKeyboardButton button = new InlineKeyboardButton();
+            button.setText("Билет " + number);
+            button.setCallbackData("ticket_" + number);
+            row.add(button);
+
+            if (row.size() == 4) {
+                keyboard.add(row);
+                row = new ArrayList<>();
+            }
+        }
+
+        if (!row.isEmpty()) {
+            keyboard.add(row);
+        }
+
+        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
+        markup.setKeyboard(keyboard);
+
+        this.send(chatId, "📚 Выберите билет:", markup);
+    }
+
+    private void startTicket(long chatId, int number) {
+        TicketService.Run run = this.tickets.start(chatId, number);
+
+        if (run == null) {
+            this.send(chatId, "Билет " + number + " не найден.", null);
+            return;
+        }
+
+        this.showQuestion(chatId, run);
+    }
+
+    private void showQuestion(long chatId, TicketService.Run run) {
+        Question question = run.current();
+
+        StringBuilder text = new StringBuilder();
+        text.append("📚 Билет ").append(run.ticket().number())
+                .append(", вопрос ").append(run.index() + 1)
+                .append(" из ").append(run.ticket().size()).append("\n\n");
+        text.append(question.text()).append("\n\n");
+
+        List<InlineKeyboardButton> row = new ArrayList<>();
+
+        for (int i = 0; i < question.options().size(); i++) {
+            text.append(i + 1).append(") ").append(question.options().get(i)).append("\n");
+
+            InlineKeyboardButton button = new InlineKeyboardButton();
+            button.setText(String.valueOf(i + 1));
+            button.setCallbackData("answer_" + i);
+            row.add(button);
+        }
+
+        if (question.imageUrl() != null) {
+            text.append("\n🖼 Картинка: ").append(question.imageUrl());
+        }
+
+        List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
+        keyboard.add(row);
+
+        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
+        markup.setKeyboard(keyboard);
+
+        this.send(chatId, text.toString(), markup);
+    }
+
+    private void answerQuestion(long chatId, int option) {
+        TicketService.Run run = this.tickets.run(chatId);
+
+        if (run == null || run.current() == null) {
+            this.showTicketMenu(chatId);
+            return;
+        }
+
+        Question question = run.current();
+        boolean isCorrect = option == question.correctIndex();
+
+        run.answer(isCorrect);
+
+        StringBuilder text = new StringBuilder();
+
+        if (isCorrect) {
+            text.append("✅ Верно!");
+        } else {
+            text.append("❌ Неверно. Правильный ответ: ")
+                    .append(question.correctIndex() + 1).append(" — ")
+                    .append(question.options().get(question.correctIndex()));
+        }
+
+        if (question.explanation() != null && !question.explanation().isBlank()) {
+            text.append("\n\n").append(question.explanation());
+        }
+
+        InlineKeyboardButton next = new InlineKeyboardButton();
+        next.setText(run.finished() ? "📊 Результат" : "Далее ▶");
+        next.setCallbackData("next");
+
+        List<InlineKeyboardButton> row = new ArrayList<>();
+        row.add(next);
+
+        List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
+        keyboard.add(row);
+
+        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
+        markup.setKeyboard(keyboard);
+
+        this.send(chatId, text.toString(), markup);
+    }
+
+    private void nextQuestion(long chatId) {
+        TicketService.Run run = this.tickets.run(chatId);
+
+        if (run == null) {
+            this.showTicketMenu(chatId);
+            return;
+        }
+
+        if (run.finished()) {
+            this.showResult(chatId, run);
+            return;
+        }
+
+        this.showQuestion(chatId, run);
+    }
+
+    private void showResult(long chatId, TicketService.Run run) {
+        int number = run.ticket().number();
+        int total = run.ticket().size();
+        int correct = run.correct();
+
+        String verdict;
+
+        if (correct == total) {
+            verdict = "🏆 Идеально, все ответы верные!";
+        } else if (correct * 100 / total >= 90) {
+            verdict = "✅ Экзамен сдан.";
+        } else {
+            verdict = "📖 Стоит повторить материал и попробовать ещё.";
+        }
+
+        String text = "📊 Билет " + number + "\n\n"
+                + "Правильных ответов: " + correct + " из " + total + "\n"
+                + "Ошибок: " + run.wrong() + "\n\n"
+                + verdict;
+
+        InlineKeyboardButton again = new InlineKeyboardButton();
+        again.setText("🔁 Заново");
+        again.setCallbackData("again_" + number);
+
+        InlineKeyboardButton menu = new InlineKeyboardButton();
+        menu.setText("📚 К билетам");
+        menu.setCallbackData("tickets_menu");
+
+        List<InlineKeyboardButton> row = new ArrayList<>();
+        row.add(again);
+        row.add(menu);
+
+        List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
+        keyboard.add(row);
+
+        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
+        markup.setKeyboard(keyboard);
+
+        this.tickets.rememberResult(chatId, "Билет " + number + ": " + correct + " из " + total);
+        this.tickets.finish(chatId);
+        this.send(chatId, text, markup);
+    }
+
+    private void send(long chatId, String text, InlineKeyboardMarkup markup) {
+        SendMessage message = new SendMessage();
+        message.setChatId(chatId);
+        message.setText(text);
+
+        if (markup != null) {
+            message.setReplyMarkup(markup);
+        }
+
+        try {
+            this.execute(message);
+        } catch (Exception error) {
+            error.printStackTrace();
+        }
+    }
+
+    private void showProfile(long chatId) {
+        StringBuilder text = new StringBuilder();
+        text.append("👤 Личный кабинет\n\n");
+
+        String enrollment = this.findEnrollment(chatId);
+
+        if (enrollment == null) {
+            text.append("📝 Заявка на курс: не подана\nОтправьте /completeForm\n\n");
+        } else {
+            text.append("📝 Анкета: ").append(enrollment).append("\n\n");
+        }
+
+        List<String> bookings = this.findBookings(chatId);
+
+        if (bookings.isEmpty()) {
+            text.append("🚙 Записи на вождение: нет\nЗаписаться: /drive\n\n");
+        } else {
+            text.append("🚙 Записи на вождение:\n");
+
+            for (String booking : bookings) {
+                text.append("• ").append(booking).append("\n");
+            }
+
+            text.append("\n");
+        }
+
+        String result = this.tickets.lastResult(chatId);
+        text.append("📚 Билеты: ").append(result == null ? "ещё не решали" : result);
+
+        this.send(chatId, text.toString(), null);
+    }
+
+    private String findEnrollment(long chatId) {
+        java.nio.file.Path path = java.nio.file.Path.of("students.txt");
+
+        if (!java.nio.file.Files.exists(path)) {
+            return null;
+        }
+
+        String marker = "[" + chatId + "]";
+
+        try {
+            List<String> lines = java.nio.file.Files.readAllLines(path, java.nio.charset.StandardCharsets.UTF_8);
+
+            for (int i = lines.size() - 1; i >= 0; i--) {
+                String line = lines.get(i).trim();
+
+                if (!line.startsWith("[")) {
+                    continue;
+                }
+
+                int end = line.indexOf(']');
+
+                if (end < 0) {
+                    continue;
+                }
+
+                String rest = line.substring(end + 1).trim();
+
+                if (rest.startsWith(marker)) {
+                    return rest.substring(marker.length()).trim();
+                }
+            }
+        } catch (Exception ignored) {
+        }
+
+        return null;
+    }
+
+    private List<String> findBookings(long chatId) {
+        List<String> result = new ArrayList<>();
+        java.nio.file.Path path = java.nio.file.Path.of("appointments.txt");
+
+        if (!java.nio.file.Files.exists(path)) {
+            return result;
+        }
+
+        try {
+            for (String line : java.nio.file.Files.readAllLines(path, java.nio.charset.StandardCharsets.UTF_8)) {
+                String[] parts = line.split("\\] ", 2);
+
+                if (parts.length == 2 && parts[0].replace("[", "").trim().equals(String.valueOf(chatId))) {
+                    result.add(parts[1].trim());
+                }
+            }
+        } catch (Exception ignored) {
+        }
+
+        return result;
     }
 
     private void handleDriveCommand(long chatId, int page, Integer messageId) {

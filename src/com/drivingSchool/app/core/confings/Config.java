@@ -11,6 +11,9 @@ package com.drivingSchool.app.core.confings;
  * Также тут реализованы методы equals() и hashCode() - в зависимости от аргументов, а также toString()
  *
  * @param api - способ взаимодействия пользователя и бота
- * @param saveMode - способ сохранения информации, которая передается боту.
+ * @param saveMode - способ сохранения информации, которая передается боту
+ * @param botToken - токен Telegram-бота; null, если bot.properties не найден
+ * @param adminId - id администратора в Telegram; 0, если не задан
  */
-public record Config(String api, String saveMode) {}
+
+public record Config(String api, String saveMode, String botToken, long adminId) {}

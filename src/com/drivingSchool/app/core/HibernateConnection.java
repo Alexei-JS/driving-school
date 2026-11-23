@@ -1,6 +1,8 @@
 package com.drivingSchool.app.core;
 
+import com.drivingSchool.app.models.Booking;
 import com.drivingSchool.app.models.Student;
+import com.drivingSchool.app.models.TicketResult;
 import org.hibernate.SessionFactory;
 import org.hibernate.cfg.Configuration;
 
@@ -22,6 +24,8 @@ public class HibernateConnection{
         // Конфигурация создается на основе classpath, в котором лежит hibernate.configuration
         Configuration configuration = new Configuration()
                 .addAnnotatedClass(Student.class)
+                .addAnnotatedClass(Booking.class)
+                .addAnnotatedClass(TicketResult.class)
                 .setProperty("hibernate.hbm2ddl.auto", "validate"); // Для контроля полей таблицы
 
         this.createDataBaseStudents(configuration);

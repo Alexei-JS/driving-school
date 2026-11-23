@@ -42,8 +42,25 @@ public class TelegramBot extends TelegramLongPollingBot {
     private final TelegramUI ui;
     private final BotCommandHandler handler;
 
-    private final java.util.Map<Long, Boolean> isWaitingForSchedule = new java.util.HashMap<>();
-    private final java.util.Map<Long, Boolean> isWaitingForForm = new java.util.HashMap<>();
+    private enum BotState {
+        IDLE,
+        AWAITING_FORM,
+        AWAITING_SCHEDULE
+    }
+
+    private final java.util.Map<Long, BotState> states = new java.util.concurrent.ConcurrentHashMap<>();
+
+    private BotState state(long chatId) {
+        return this.states.getOrDefault(chatId, BotState.IDLE);
+    }
+
+    private void setState(long chatId, BotState state) {
+        if (state == BotState.IDLE) {
+            this.states.remove(chatId);
+        } else {
+            this.states.put(chatId, state);
+        }
+    }
 
     private final TicketService tickets =
             new TicketService(java.nio.file.Path.of("data", "tickets"));
@@ -89,7 +106,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                         content = "пока не задано";
                     }
 
-                    isWaitingForSchedule.put(ui.getChatId(), true);
+                    TelegramBot.this.setState(ui.getChatId(), BotState.AWAITING_SCHEDULE);
                     sendWithKeyboard(ui.getChatId(), "📅 *Текущее расписание:*\n\n" + content + "\n\n" +
                         "👑 Вы администратор. Отправьте новое расписание одним сообщением\n" +
                         "или нажмите «❌ Отмена».", cancelKeyboard());
@@ -158,7 +175,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                     return true;
                 }
 
-                isWaitingForForm.put(ui.getChatId(), true);
+                TelegramBot.this.setState(ui.getChatId(), BotState.AWAITING_FORM);
                 sendWithKeyboard(ui.getChatId(), "📝 *Запись на курс*\n\n" +
                     "Отправьте данные одним сообщением в формате:\n" +
                     "`ФИО, Возраст, Категория (A/B/C), Справка (да/нет)`\n\n" +
@@ -184,8 +201,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 answer.setCallbackQueryId(callbackQueryId);
                 try { execute(answer); } catch (Exception ignored) {}
 
-                isWaitingForForm.put(callbackChatId, false);
-                isWaitingForSchedule.put(callbackChatId, false);
+                this.setState(callbackChatId, BotState.IDLE);
                 this.showMainMenu(callbackChatId);
                 return;
             }
@@ -193,7 +209,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             if (callData.startsWith("ticket_") || callData.startsWith("again_")
                     || callData.startsWith("answer_") || callData.startsWith("next")
                     || callData.equals("tickets_menu")) {
-                this.handleTicketCallback(callbackChatId, callData, callbackQueryId);
+                this.handleTicketCallback(callbackChatId, callData, callbackQueryId, messageId);
                 return;
             }
 
@@ -264,7 +280,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             }
 
             if (text.equals("/tickets")) {
-                this.showTicketMenu(chatId);
+                this.showTicketMenu(chatId, null);
                 return;
             }
 
@@ -274,8 +290,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             }
 
             if (text.equals("🏠 В главное меню")) {
-                isWaitingForForm.put(chatId, false);
-                isWaitingForSchedule.put(chatId, false);
+                this.setState(chatId, BotState.IDLE);
                 this.showMainMenu(chatId);
                 return;
             }
@@ -290,30 +305,30 @@ public class TelegramBot extends TelegramLongPollingBot {
                 return;
             }
 
-            if (isWaitingForSchedule.getOrDefault(chatId, false) && chatId == adminId) {
+            if (this.state(chatId) == BotState.AWAITING_SCHEDULE && chatId == adminId) {
                 if (text.equals("/cancel")) {
-                    isWaitingForSchedule.put(chatId, false);
-                    ui.sendMessage("❌ Отмена. Расписание не изменено.");
+                    this.setState(chatId, BotState.IDLE);
+                    this.sendWithMainKeyboard(chatId, "❌ Отмена. Расписание не изменено.");
                 } else {
                     try {
                         java.nio.file.Files.writeString(java.nio.file.Path.of("schedule.txt"), text, java.nio.charset.StandardCharsets.UTF_8);
-                        isWaitingForSchedule.put(chatId, false);
-                        ui.sendMessage("✅ Расписание успешно обновлено!");
+                        this.setState(chatId, BotState.IDLE);
+                        this.sendWithMainKeyboard(chatId, "✅ Расписание успешно обновлено!");
                     } catch (Exception e) {
-                        ui.sendMessage("Ошибка сохранения: " + e.getMessage());
+                        this.sendWithCancelKeyboard(chatId, "Ошибка сохранения: " + e.getMessage());
                     }
                 }
                 return;
             }
 
-            if (isWaitingForForm.getOrDefault(chatId, false)) {
+            if (this.state(chatId) == BotState.AWAITING_FORM) {
                 if (text.equals("/cancel")) {
-                    isWaitingForForm.put(chatId, false);
-                    ui.sendMessage("❌ Отмена. Вы не записаны.");
+                    this.setState(chatId, BotState.IDLE);
+                    this.sendWithMainKeyboard(chatId, "❌ Отмена. Вы не записаны.");
                 } else {
                     String[] parts = text.split(",");
                     if (parts.length != 4) {
-                        ui.sendMessage("❌ Ошибка формата. Отправьте данные в формате: ФИО, Возраст, Категория, Справка (да/нет)");
+                        this.sendWithCancelKeyboard(chatId, "❌ Ошибка формата. Отправьте данные в формате: ФИО, Возраст, Категория, Справка (да/нет)");
                         return;
                     }
                     String name = parts[0].trim();
@@ -328,11 +343,11 @@ public class TelegramBot extends TelegramLongPollingBot {
                             long timestamp = System.currentTimeMillis();
                             fw.write("[" + timestamp + "] [" + chatId + "] " + text + "\n");
                         } catch (Exception e) { e.printStackTrace(); }
-                        isWaitingForForm.put(chatId, false);
-                        ui.sendMessage("✅ Вы успешно записаны на курс!");
+                        this.setState(chatId, BotState.IDLE);
+                        this.sendWithMainKeyboard(chatId, "✅ Вы успешно записаны на курс!");
                     } else {
                         // Ошибка
-                        ui.sendMessage(error + "\nПопробуйте снова или введите /cancel.");
+                        this.sendWithCancelKeyboard(chatId, error + "\nПопробуйте снова или введите /cancel.");
                     }
                 }
                 return;
@@ -373,6 +388,32 @@ public class TelegramBot extends TelegramLongPollingBot {
         return keyboard;
     }
 
+    private void sendWithMainKeyboard(long chatId, String text) {
+        SendMessage message = new SendMessage();
+        message.setChatId(chatId);
+        message.setText(text);
+        message.setReplyMarkup(this.mainKeyboard());
+
+        try {
+            execute(message);
+        } catch (Exception error) {
+            error.printStackTrace();
+        }
+    }
+
+    private void sendWithCancelKeyboard(long chatId, String text) {
+        SendMessage message = new SendMessage();
+        message.setChatId(chatId);
+        message.setText(text);
+        message.setReplyMarkup(this.cancelKeyboard());
+
+        try {
+            execute(message);
+        } catch (Exception error) {
+            error.printStackTrace();
+        }
+    }
+
     private void sendWithKeyboard(long chatId, String text, ReplyKeyboardMarkup keyboard) {
         SendMessage message = new SendMessage();
         message.setChatId(chatId);
@@ -392,8 +433,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     private void cancelCurrent(long chatId) {
-        isWaitingForForm.put(chatId, false);
-        isWaitingForSchedule.put(chatId, false);
+        this.setState(chatId, BotState.IDLE);
         this.tickets.finish(chatId);
         this.sendWithKeyboard(chatId, "❌ Действие отменено.", this.mainKeyboard());
     }
@@ -401,7 +441,35 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     //Билеты
 
-    private void handleTicketCallback(long chatId, String data, String callbackQueryId) {
+    private void edit(long chatId, Integer messageId, String text, InlineKeyboardMarkup markup) {
+        if (messageId == null) {
+            this.send(chatId, text, markup);
+            return;
+        }
+
+        EditMessageText message = new EditMessageText();
+        message.setChatId(chatId);
+        message.setMessageId(messageId);
+        message.setText(text);
+
+        if (markup != null) {
+            message.setReplyMarkup(markup);
+        }
+
+        try {
+            execute(message);
+        } catch (Exception error) {
+            String reason = error.getMessage();
+
+            if (reason != null && reason.contains("message is not modified")) {
+                return;
+            }
+
+            this.send(chatId, text, markup);
+        }
+    }
+
+    private void handleTicketCallback(long chatId, String data, String callbackQueryId, int messageId) {
         AnswerCallbackQuery answer = new AnswerCallbackQuery();
         answer.setCallbackQueryId(callbackQueryId);
         try {
@@ -410,30 +478,30 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
 
         if (data.equals("tickets_menu")) {
-            this.showTicketMenu(chatId);
+            this.showTicketMenu(chatId, messageId);
             return;
         }
 
         String[] parts = data.split("_");
 
         if (parts[0].equals("ticket") || parts[0].equals("again")) {
-            this.startTicket(chatId, Integer.parseInt(parts[1]));
+            this.startTicket(chatId, Integer.parseInt(parts[1]), messageId);
             return;
         }
 
         if (parts[0].equals("answer")) {
-            this.answerQuestion(chatId, Integer.parseInt(parts[1]));
+            this.answerQuestion(chatId, Integer.parseInt(parts[1]), messageId);
             return;
         }
 
         if (parts[0].equals("next")) {
-            this.nextQuestion(chatId);
+            this.nextQuestion(chatId, messageId);
         }
     }
 
-    private void showTicketMenu(long chatId) {
+    private void showTicketMenu(long chatId, Integer messageId) {
         if (this.tickets.isEmpty()) {
-            this.send(chatId, "📚 Билеты пока не загружены.\nПоложите файлы в data/tickets.", null);
+            this.edit(chatId, messageId, "📚 Билеты пока не загружены.\nПоложите файлы в data/tickets.", null);
             return;
         }
 
@@ -459,21 +527,21 @@ public class TelegramBot extends TelegramLongPollingBot {
         InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
         markup.setKeyboard(keyboard);
 
-        this.send(chatId, "📚 Выберите билет:", markup);
+        this.edit(chatId, messageId, "📚 Выберите билет:", markup);
     }
 
-    private void startTicket(long chatId, int number) {
+    private void startTicket(long chatId, int number, Integer messageId) {
         TicketService.Run run = this.tickets.start(chatId, number);
 
         if (run == null) {
-            this.send(chatId, "Билет " + number + " не найден.", null);
+            this.edit(chatId, messageId, "Билет " + number + " не найден.", null);
             return;
         }
 
-        this.showQuestion(chatId, run);
+        this.showQuestion(chatId, run, messageId);
     }
 
-    private void showQuestion(long chatId, TicketService.Run run) {
+    private void showQuestion(long chatId, TicketService.Run run, Integer messageId) {
         Question question = run.current();
 
         StringBuilder text = new StringBuilder();
@@ -503,14 +571,14 @@ public class TelegramBot extends TelegramLongPollingBot {
         InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
         markup.setKeyboard(keyboard);
 
-        this.send(chatId, text.toString(), markup);
+        this.edit(chatId, messageId, text.toString(), markup);
     }
 
-    private void answerQuestion(long chatId, int option) {
+    private void answerQuestion(long chatId, int option, Integer messageId) {
         TicketService.Run run = this.tickets.run(chatId);
 
         if (run == null || run.current() == null) {
-            this.showTicketMenu(chatId);
+            this.showTicketMenu(chatId, messageId);
             return;
         }
 
@@ -546,23 +614,66 @@ public class TelegramBot extends TelegramLongPollingBot {
         InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
         markup.setKeyboard(keyboard);
 
-        this.send(chatId, text.toString(), markup);
+        this.edit(chatId, messageId, text.toString(), markup);
     }
 
-    private void nextQuestion(long chatId) {
+    private void nextQuestion(long chatId, Integer messageId) {
         TicketService.Run run = this.tickets.run(chatId);
 
         if (run == null) {
-            this.showTicketMenu(chatId);
+            this.showTicketMenu(chatId, messageId);
             return;
         }
 
         if (run.finished()) {
-            this.showResult(chatId, run);
+            this.showResult(chatId, run, messageId);
             return;
         }
 
-        this.showQuestion(chatId, run);
+        this.showQuestion(chatId, run, messageId);
+    }
+
+    private void showResult(long chatId, TicketService.Run run, Integer messageId) {
+        int number = run.ticket().number();
+        int total = run.ticket().size();
+        int correct = run.correct();
+
+        String verdict;
+
+        if (correct == total) {
+            verdict = "🏆 Идеально, все ответы верные!";
+        } else if (correct * 100 / total >= 90) {
+            verdict = "✅ Экзамен сдан.";
+        } else {
+            verdict = "📖 Стоит повторить материал и попробовать ещё.";
+        }
+
+        String text = "📊 Билет " + number + "\n\n"
+                + "Правильных ответов: " + correct + " из " + total + "\n"
+                + "Ошибок: " + run.wrong() + "\n\n"
+                + verdict;
+
+        InlineKeyboardButton again = new InlineKeyboardButton();
+        again.setText("🔁 Заново");
+        again.setCallbackData("again_" + number);
+
+        InlineKeyboardButton menu = new InlineKeyboardButton();
+        menu.setText("📚 К билетам");
+        menu.setCallbackData("tickets_menu");
+
+        List<InlineKeyboardButton> row = new ArrayList<>();
+        row.add(again);
+        row.add(menu);
+
+        List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
+        keyboard.add(row);
+
+        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
+        markup.setKeyboard(keyboard);
+
+        this.tickets.rememberResult(chatId, "Билет " + number + ": " + correct + " из " + total);
+        this.tickets.finish(chatId);
+        this.edit(chatId, messageId, text, markup);
     }
 
     private void showResult(long chatId, TicketService.Run run) {
@@ -624,7 +735,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
     }
 
-    // ---------- Личный кабинет ----------
+    // Личный кабинет
 
     private void showProfile(long chatId) {
         StringBuilder text = new StringBuilder();
